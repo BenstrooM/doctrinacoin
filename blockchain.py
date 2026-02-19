@@ -32,7 +32,7 @@ class Blockchain:
     def __init__(self):
         self.chain = [] # seznam bloku
         self.pending_transactions = [] #mempool
-        self.difficulty = 6
+        self.difficulty = 4
         self.mining_reward = 50
         self.current_nonce = 0
         self.current_hash_attempt = ""
@@ -135,4 +135,5 @@ class Blockchain:
                 return False
             if current.previous_hash != previous.hash:
                 return False
+
         return True
