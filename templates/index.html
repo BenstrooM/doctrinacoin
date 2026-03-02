@@ -531,6 +531,14 @@
             font-size: 0.8rem;
         }
 
+        .loading-msg {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: 0.78rem;
+            animation: pulse 1.5s infinite;
+        }
+
         .section-header {
             display: flex;
             justify-content: space-between;
@@ -833,34 +841,40 @@
 
     // ─── DASHBOARD ────────────────────────────────────────────────────────
     async function loadDashboard() {
-        const [chainRes, validRes] = await Promise.all([
-            fetch('/chain'),
-            fetch('/validate')
-        ]);
-        const chain = await chainRes.json();
-        const valid = await validRes.json();
+        document.getElementById('latest-block-display').innerHTML = 
+            '<div class="loading-msg">Connecting to network...</div>';
+        try {
+            const [chainRes, validRes] = await Promise.all([
+                fetch('/chain'),
+                fetch('/validate')
+            ]);
+            const chain = await chainRes.json();
+            const valid = await validRes.json();
 
-        document.getElementById('stat-blocks').innerHTML = chain.length + '<span> blocks</span>';
-        document.getElementById('stat-valid').textContent = valid.is_valid ? '✓ Valid' : '✗ Invalid';
-        document.getElementById('stat-valid').style.color = valid.is_valid ? 'var(--accent2)' : 'var(--danger)';
+            document.getElementById('stat-blocks').innerHTML = chain.length + '<span> blocks</span>';
+            document.getElementById('stat-valid').textContent = valid.is_valid ? '✓ Valid' : '✗ Invalid';
+            document.getElementById('stat-valid').style.color = valid.is_valid ? 'var(--accent2)' : 'var(--danger)';
 
-        await refreshMyBalance();
+            await refreshMyBalance();
 
-        // show latest block
-        if (chain.chain.length > 0) {
-            const last = chain.chain[chain.chain.length - 1];
-            const date = new Date(last.timestamp * 1000).toLocaleString();
-            document.getElementById('latest-block-display').innerHTML = `
-                <div class="block-header">
-                    <div class="block-index">Block #${last.index}</div>
-                    <div class="block-time">${date}</div>
-                </div>
-                <div class="block-hash">${formatHash(last.hash)}</div>
-                <div class="block-meta">
-                    Nonce: <span>${last.nonce.toLocaleString()}</span>
-                    &nbsp;&nbsp;Transactions: <span>${last.transactions.length}</span>
-                </div>
-            `;
+            if (chain.chain.length > 0) {
+                const last = chain.chain[chain.chain.length - 1];
+                const date = new Date(last.timestamp * 1000).toLocaleString();
+                document.getElementById('latest-block-display').innerHTML = `
+                    <div class="block-header">
+                        <div class="block-index">Block #${last.index}</div>
+                        <div class="block-time">${date}</div>
+                    </div>
+                    <div class="block-hash">${formatHash(last.hash)}</div>
+                    <div class="block-meta">
+                        Nonce: <span>${last.nonce.toLocaleString()}</span>
+                        &nbsp;&nbsp;Transactions: <span>${last.transactions.length}</span>
+                    </div>
+                `;
+            }
+        } catch (e) {
+            document.getElementById('latest-block-display').innerHTML = 
+                '<div class="loading-msg">Waiting for server to wake up... please wait a moment and refresh.</div>';
         }
     }
 
@@ -1013,15 +1027,17 @@
 
     // ─── INIT ─────────────────────────────────────────────────────────────
     window.onload = () => {
-        const stored = loadStoredWallet();
-        if (stored.address) {
-            document.getElementById('mine-address').value = stored.address;
-            document.getElementById('send-sender').value = stored.address;
-            document.getElementById('send-private-key').value = stored.privateKey;
-            refreshMyBalance();
-        }
+    const stored = loadStoredWallet();
+    if (stored.address) {
+        document.getElementById('mine-address').value = stored.address;
+        document.getElementById('send-sender').value = stored.address;
+        document.getElementById('send-private-key').value = stored.privateKey;
+    }
+    setTimeout(() => {
         loadDashboard();
-    };
+        if (stored.address) refreshMyBalance();
+    }, 1000);
+};
 </script>
 
 </body>
