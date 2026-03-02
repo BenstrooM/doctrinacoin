@@ -3,6 +3,7 @@
 import hashlib 
 import json # prevadeni python objektu do json formatu (stringů)
 import time 
+import os
 from ecdsa import SigningKey, VerifyingKey, SECP256k1, BadSignatureError 
 
 # bloky
@@ -140,33 +141,78 @@ class Blockchain:
         return True
             
     def save_chain(self):
-        chain_data = []
-        for block in self.chain:
-            chain_data.append({
-                "index": block.index,
-                "transactions": block.transactions,
-                "previous_hash": block.previous_hash,
-                "nonce": block.nonce,
-                "timestamp": block.timestamp,
-                "hash": block.hash
-            })
-        with open("chain.json", "w") as f:
-            json.dump(chain_data, f)
+        mongo_uri = os.environ.get("MONGO_URI")
+        if mongo_uri:
+            from pymongo import MongoClient
+            client = MongoClient(mongo_uri)
+            db = client["doctrinacoin"]
+            collection = db["chain"]
+            chain_data = []
+            for block in self.chain:
+                chain_data.append({
+                    "index": block.index,
+                    "transactions": block.transactions,
+                    "previous_hash": block.previous_hash,
+                    "nonce": block.nonce,
+                    "timestamp": block.timestamp,
+                    "hash": block.hash
+                })
+            collection.delete_many({})
+            collection.insert_many(chain_data)
+            client.close()
+        else:
+            chain_data = []
+            for block in self.chain:
+                chain_data.append({
+                    "index": block.index,
+                    "transactions": block.transactions,
+                    "previous_hash": block.previous_hash,
+                    "nonce": block.nonce,
+                    "timestamp": block.timestamp,
+                    "hash": block.hash
+                })
+            with open("chain.json", "w") as f:
+                json.dump(chain_data, f)
 
     def load_chain(self):
-        try:
-            with open("chain.json", "r") as f:
-                chain_data = json.load(f)
-            self.chain = []
-            for block_data in chain_data:
-                block = Block.__new__(Block)
-                block.index = block_data["index"]
-                block.transactions = block_data["transactions"]
-                block.previous_hash = block_data["previous_hash"]
-                block.nonce = block_data["nonce"]
-                block.timestamp = block_data["timestamp"]
-                block.hash = block_data["hash"]
-                self.chain.append(block)
-            return True
-        except FileNotFoundError:
-            return False
+        mongo_uri = os.environ.get("MONGO_URI")
+        if mongo_uri:
+            try:
+                from pymongo import MongoClient
+                client = MongoClient(mongo_uri)
+                db = client["doctrinacoin"]
+                collection = db["chain"]
+                chain_data = list(collection.find({}, {"_id": 0}).sort("index", 1))
+                client.close()
+                if not chain_data:
+                    return False
+                self.chain = []
+                for block_data in chain_data:
+                    block = Block.__new__(Block)
+                    block.index = block_data["index"]
+                    block.transactions = block_data["transactions"]
+                    block.previous_hash = block_data["previous_hash"]
+                    block.nonce = block_data["nonce"]
+                    block.timestamp = block_data["timestamp"]
+                    block.hash = block_data["hash"]
+                    self.chain.append(block)
+                return True
+            except Exception:
+                return False
+        else:
+            try:
+                with open("chain.json", "r") as f:
+                    chain_data = json.load(f)
+                self.chain = []
+                for block_data in chain_data:
+                    block = Block.__new__(Block)
+                    block.index = block_data["index"]
+                    block.transactions = block_data["transactions"]
+                    block.previous_hash = block_data["previous_hash"]
+                    block.nonce = block_data["nonce"]
+                    block.timestamp = block_data["timestamp"]
+                    block.hash = block_data["hash"]
+                    self.chain.append(block)
+                return True
+            except FileNotFoundError:
+                return False
