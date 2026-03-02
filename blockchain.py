@@ -136,7 +136,7 @@ class Blockchain:
             if current.hash != current.calculate_hash():
                 return False
             if current.previous_hash != previous.hash:
-                return False
+                return True
             
     def save_chain(self):
         chain_data = []
@@ -169,6 +169,3 @@ class Blockchain:
             return True
         except FileNotFoundError:
             return False
-        
-    
-        return True
