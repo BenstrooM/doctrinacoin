@@ -164,5 +164,13 @@ def index():
 def test():
     return jsonify({"hashes_per_second": blockchain.hashes_per_second})
 
+@app.route("/test-save")
+def test_save():
+    try:
+        blockchain.save_chain()
+        return jsonify({"message": "saved successfully"})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
