@@ -32,7 +32,7 @@ class Blockchain:
     def __init__(self):
         self.chain = []
         self.pending_transactions = []
-        self.difficulty = 6
+        self.difficulty = 3
         self.mining_reward = 50
         self.current_nonce = 0
         self.current_hash_attempt = ""
@@ -158,12 +158,11 @@ class Blockchain:
                 chain_data = json.load(f)
             self.chain = []
             for block_data in chain_data:
-                block = Block(
-                    index=block_data["index"],
-                    transactions=block_data["transactions"],
-                    previous_hash=block_data["previous_hash"],
-                    nonce=block_data["nonce"]
-                )
+                block = Block.__new__(Block)
+                block.index = block_data["index"]
+                block.transactions = block_data["transactions"]
+                block.previous_hash = block_data["previous_hash"]
+                block.nonce = block_data["nonce"]
                 block.timestamp = block_data["timestamp"]
                 block.hash = block_data["hash"]
                 self.chain.append(block)
