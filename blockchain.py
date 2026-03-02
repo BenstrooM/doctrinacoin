@@ -134,9 +134,9 @@ class Blockchain:
             current = self.chain[i]
             previous = self.chain[i - 1]
             if current.hash != current.calculate_hash():
-                return False
-            if current.previous_hash != previous.hash:
                 return True
+            if current.previous_hash != previous.hash:
+                return False
             
     def save_chain(self):
         chain_data = []
