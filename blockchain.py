@@ -30,14 +30,15 @@ class Block:
 
 class Blockchain:
     def __init__(self):
-        self.chain = [] # seznam bloku
-        self.pending_transactions = [] #mempool
-        self.difficulty = 7
+        self.chain = []
+        self.pending_transactions = []
+        self.difficulty = 6
         self.mining_reward = 50
         self.current_nonce = 0
         self.current_hash_attempt = ""
         self.hashes_per_second = 0
-        self.create_genesis_block()
+        if not self.load_chain():
+            self.create_genesis_block()
     
     def create_genesis_block(self):
         genesis_block = Block(0, [], "0")
@@ -136,7 +137,41 @@ class Blockchain:
             if current.previous_hash != previous.hash:
                 return False
 
+    def save_chain(self):
+        chain_data = []
+        for block in self.chain:
+            chain_data.append({
+                "index": block.index,
+                "transactions": block.transactions,
+                "previous_hash": block.previous_hash,
+                "nonce": block.nonce,
+                "timestamp": block.timestamp,
+                "hash": block.hash
+            })
+        with open("chain.json", "w") as f:
+            json.dump(chain_data, f)
+
+    def load_chain(self):
+        try:
+            with open("chain.json", "r") as f:
+                chain_data = json.load(f)
+            self.chain = []
+            for block_data in chain_data:
+                block = Block(
+                    index=block_data["index"],
+                    transactions=block_data["transactions"],
+                    previous_hash=block_data["previous_hash"],
+                    nonce=block_data["nonce"]
+                )
+                block.timestamp = block_data["timestamp"]
+                block.hash = block_data["hash"]
+                self.chain.append(block)
+            return True
+        except FileNotFoundError:
+            return False
+
         return True
+
 
 
 
