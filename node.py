@@ -13,7 +13,8 @@ mining_status = {
     "message": "",
     "block_index": None,
     "hash": None,
-    "transactions": None
+    "transactions": None,
+    "queue": []
 }
 
 @app.route("/wallet/new", methods=["GET"]) # vytvoreni nove penezenky
@@ -57,23 +58,24 @@ def new_transaction():
 def mine():
     global mining_status
 
-    if mining_status["is_mining"]:
-        return jsonify({"error": "Already mining a block!"}), 400
-
     data = request.get_json()
 
     if "miner_address" not in data:
         return jsonify({"error": "Missing miner address"}), 400
 
-    def mining_thread():
+    if mining_status["is_mining"]:
+        mining_status["queue"].append(data["miner_address"])
+        position = len(mining_status["queue"])
+        return jsonify({"message": f"Added to queue! Position {position}"}), 202
+
+    def run_mining(address):
         global mining_status
         mining_status["is_mining"] = True
-        mining_status["message"] = "Mining in progress..."
         mining_status["hash"] = None
         mining_status["block_index"] = None
         mining_status["transactions"] = None
 
-        blockchain.mine_pending_transactions(data["miner_address"])
+        blockchain.mine_pending_transactions(address)
         last_block = blockchain.get_last_block()
 
         mining_status["is_mining"] = False
@@ -82,7 +84,12 @@ def mine():
         mining_status["hash"] = last_block.hash
         mining_status["transactions"] = last_block.transactions
 
-    thread = threading.Thread(target=mining_thread)
+        if mining_status["queue"]:
+            next_miner = mining_status["queue"].pop(0)
+            thread = threading.Thread(target=run_mining, args=(next_miner,))
+            thread.start()
+
+    thread = threading.Thread(target=run_mining, args=(data["miner_address"],))
     thread.start()
 
     return jsonify({"message": "Mining started!"})
