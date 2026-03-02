@@ -144,7 +144,7 @@ class Blockchain:
         mongo_uri = os.environ.get("MONGO_URI")
         if mongo_uri:
             from pymongo import MongoClient
-            client = MongoClient(mongo_uri)
+            client = MongoClient(mongo_uri, tls=True, tlsAllowInvalidCertificates=True)
             db = client["doctrinacoin"]
             collection = db["chain"]
             chain_data = []
@@ -179,7 +179,7 @@ class Blockchain:
         if mongo_uri:
             try:
                 from pymongo import MongoClient
-                client = MongoClient(mongo_uri)
+                client = MongoClient(mongo_uri, tls=True, tlsAllowInvalidCertificates=True)
                 db = client["doctrinacoin"]
                 collection = db["chain"]
                 chain_data = list(collection.find({}, {"_id": 0}).sort("index", 1))
