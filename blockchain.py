@@ -4,6 +4,7 @@ import hashlib
 import json
 import time 
 import os
+import certifi
 from ecdsa import SigningKey, VerifyingKey, SECP256k1, BadSignatureError 
 
 # bloky
@@ -145,7 +146,7 @@ class Blockchain:
         if mongo_uri:
             try:
                 from pymongo import MongoClient
-                client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=5000)
+                client = MongoClient(mongo_uri, tls=True, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
                 db = client["doctrinacoin"]
                 collection = db["chain"]
                 chain_data = []
@@ -182,7 +183,7 @@ class Blockchain:
         if mongo_uri:
             try:
                 from pymongo import MongoClient
-                client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=5000)
+                client = MongoClient(mongo_uri, tls=True, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
                 db = client["doctrinacoin"]
                 collection = db["chain"]
                 chain_data = list(collection.find({}, {"_id": 0}).sort("index", 1))
