@@ -4,13 +4,14 @@ import hashlib
 import json
 import time 
 import os
+import ssl
 import certifi
 from ecdsa import SigningKey, VerifyingKey, SECP256k1, BadSignatureError 
 
 # bloky
 
 class Block:   
-    def __init__(self, index, transactions, previous_hash, nonce=0): # spusti se pokazde, kdyz se vytvori novy block
+    def __init__(self, index, transactions, previous_hash, nonce=0):
         self.index = index 
         self.transactions = transactions 
         self.previous_hash = previous_hash  
@@ -18,14 +19,14 @@ class Block:
         self.timestamp = time.time()
         self.hash = self.calculate_hash()
 
-    def calculate_hash(self): # prevede data bloku do JSON formatu a zahashuje pomoci sha256
+    def calculate_hash(self):
         block_string = json.dumps({
             "index": self.index,
             "transactions": self.transactions,
             "previous_hash": self.previous_hash,
             "nonce": self.nonce,
             "timestamp": self.timestamp
-        }, sort_keys=True) # zajistuje spravnost poradi klicu
+        }, sort_keys=True)
         return hashlib.sha256(block_string.encode()).hexdigest()
     
 # samotny blockchain
@@ -46,25 +47,36 @@ class Blockchain:
         genesis_block = Block(0, [], "0")
         genesis_block.hash = genesis_block.calculate_hash()
         self.chain.append(genesis_block)
+
+    def _get_mongo_client(self):
+        mongo_uri = os.environ.get("MONGO_URI")
+        if not mongo_uri:
+            return None
+        from pymongo import MongoClient
+        ctx = ssl.create_default_context(cafile=certifi.where())
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+        return MongoClient(mongo_uri, tls=True, tlsCAFile=certifi.where(),
+                           ssl_cert_reqs=ssl.CERT_REQUIRED,
+                           serverSelectionTimeoutMS=5000)
     
     def get_last_block(self):
-        return self.chain[-1] #posledni blok v retezci
+        return self.chain[-1]
     
-    def mine_pending_transactions(self, miner_address): # funkce pro tezeni bloku
-        reward_transaction = { # odmena pro minera 
+    def mine_pending_transactions(self, miner_address):
+        reward_transaction = {
             "sender": "NETWORK",
             "recipient": miner_address,
             "amount": self.mining_reward
         }
         self.pending_transactions.append(reward_transaction)
 
-        new_block = Block( # vytvoreni noveho bloku (do ktereho se pridaji transakce z mempoolu)
+        new_block = Block(
             index=len(self.chain),
             transactions=self.pending_transactions,
             previous_hash=self.get_last_block().hash
         )
 
-        new_block = self.proof_of_work(new_block) # proof of work v novem bloku
+        new_block = self.proof_of_work(new_block)
         self.chain.append(new_block)
         self.pending_transactions = []
         self.save_chain()
@@ -110,7 +122,7 @@ class Blockchain:
         }
         self.pending_transactions.append(transaction)
     
-    def verify_transaction(self, sender, recipient, amount, signature, public_key_hex): # overeni transakce pomoci ECDSA podpisu
+    def verify_transaction(self, sender, recipient, amount, signature, public_key_hex):
         try:
             public_key = VerifyingKey.from_string(
                 bytes.fromhex(public_key_hex), 
@@ -121,7 +133,7 @@ class Blockchain:
         except BadSignatureError:
             return False
         
-    def get_balance(self, address): # funkce pro checkovani zustatku na adrese
+    def get_balance(self, address):
         balance = 0
         for block in self.chain:
             for transaction in block.transactions:
@@ -131,7 +143,7 @@ class Blockchain:
                     balance += transaction["amount"]
         return balance
 
-    def is_chain_valid(self): # kontrola integrity blockchainu
+    def is_chain_valid(self):
         for i in range(1, len(self.chain)):
             current = self.chain[i]
             previous = self.chain[i - 1]
@@ -142,11 +154,9 @@ class Blockchain:
         return True
             
     def save_chain(self):
-        mongo_uri = os.environ.get("MONGO_URI")
-        if mongo_uri:
+        client = self._get_mongo_client()
+        if client:
             try:
-                from pymongo import MongoClient
-                client = MongoClient(mongo_uri, tls=True, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
                 db = client["doctrinacoin"]
                 collection = db["chain"]
                 chain_data = []
@@ -179,11 +189,9 @@ class Blockchain:
                 json.dump(chain_data, f)
 
     def load_chain(self):
-        mongo_uri = os.environ.get("MONGO_URI")
-        if mongo_uri:
+        client = self._get_mongo_client()
+        if client:
             try:
-                from pymongo import MongoClient
-                client = MongoClient(mongo_uri, tls=True, tlsCAFile=certifi.where(), serverSelectionTimeoutMS=5000)
                 db = client["doctrinacoin"]
                 collection = db["chain"]
                 chain_data = list(collection.find({}, {"_id": 0}).sort("index", 1))
