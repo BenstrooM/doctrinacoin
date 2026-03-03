@@ -89,6 +89,8 @@ def mine():
             thread = threading.Thread(target=run_mining, args=(next_miner,))
             thread.start()
 
+    mining_status["hash"] = None
+    mining_status["message"] = ""
     thread = threading.Thread(target=run_mining, args=(data["miner_address"],))
     thread.start()
 

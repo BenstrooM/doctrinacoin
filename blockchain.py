@@ -1,9 +1,10 @@
 # program zaroven slouzi k uceni, proto je plny komentaru
 
 import hashlib 
-import json # prevadeni python objektu do json formatu (stringů)
+import json
 import time 
 import os
+import ssl
 from ecdsa import SigningKey, VerifyingKey, SECP256k1, BadSignatureError 
 
 # bloky
@@ -144,7 +145,7 @@ class Blockchain:
         mongo_uri = os.environ.get("MONGO_URI")
         if mongo_uri:
             from pymongo import MongoClient
-            client = MongoClient(mongo_uri, tls=True, tlsAllowInvalidCertificates=True)
+            client = MongoClient(mongo_uri, ssl=True, ssl_cert_reqs=ssl.CERT_NONE)
             db = client["doctrinacoin"]
             collection = db["chain"]
             chain_data = []
@@ -179,7 +180,7 @@ class Blockchain:
         if mongo_uri:
             try:
                 from pymongo import MongoClient
-                client = MongoClient(mongo_uri, tls=True, tlsAllowInvalidCertificates=True)
+                client = MongoClient(mongo_uri, ssl=True, ssl_cert_reqs=ssl.CERT_NONE)
                 db = client["doctrinacoin"]
                 collection = db["chain"]
                 chain_data = list(collection.find({}, {"_id": 0}).sort("index", 1))
