@@ -53,11 +53,8 @@ class Blockchain:
         if not mongo_uri:
             return None
         from pymongo import MongoClient
-        ctx = ssl.create_default_context(cafile=certifi.where())
-        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
         return MongoClient(mongo_uri, tls=True, tlsCAFile=certifi.where(),
-                           ssl_cert_reqs=ssl.CERT_REQUIRED,
-                           serverSelectionTimeoutMS=5000)
+                       serverSelectionTimeoutMS=5000)
     
     def get_last_block(self):
         return self.chain[-1]
