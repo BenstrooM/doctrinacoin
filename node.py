@@ -70,10 +70,6 @@ def mine():
 
     def run_mining(address):
         global mining_status
-        mining_status["is_mining"] = True
-        mining_status["hash"] = None
-        mining_status["block_index"] = None
-        mining_status["transactions"] = None
 
         blockchain.mine_pending_transactions(address)
         last_block = blockchain.get_last_block()
