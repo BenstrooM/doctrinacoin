@@ -33,7 +33,7 @@ class Blockchain:
     def __init__(self):
         self.chain = []
         self.pending_transactions = []
-        self.difficulty = 3
+        self.difficulty = 5
         self.mining_reward = 50
         self.current_nonce = 0
         self.current_hash_attempt = ""
