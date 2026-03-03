@@ -897,8 +897,8 @@
     let currentMiningAddress = null;
 
     async function startMining() {
-    const address = document.getElementById('mine-address').value.trim();
-    if (!address) { alert('Enter your wallet address first!'); return; }
+        const address = document.getElementById('mine-address').value.trim();
+        if (!address) { alert('Enter your wallet address first!'); return; }
 
         currentMiningAddress = address;
 
@@ -915,7 +915,8 @@
         screen.classList.add('is-mining');
 
         miningInterval = setInterval(async () => {
-            // get live progress (global)
+            if (!currentMiningAddress) return;
+
             const prog = await fetch('/mine/progress').then(r => r.json());
 
             if (prog.is_mining) {
@@ -926,11 +927,11 @@
                 document.getElementById('live-miners').textContent = prog.active_miners || '—';
             }
 
-            // check this miner's personal status
             const status = await fetch(`/mine/status?address=${encodeURIComponent(currentMiningAddress)}`).then(r => r.json());
 
             if (status.status === 'won') {
                 clearInterval(miningInterval);
+                miningInterval = null;
                 screen.classList.remove('is-mining');
                 screen.classList.add('is-done');
                 document.getElementById('done-block-index').textContent = 'Block #' + status.block_index + ' added to the chain';
@@ -938,6 +939,7 @@
                 refreshMyBalance();
             } else if (status.status === 'lost') {
                 clearInterval(miningInterval);
+                miningInterval = null;
                 screen.classList.remove('is-mining');
                 screen.classList.add('is-lost');
                 refreshMyBalance();
@@ -946,13 +948,17 @@
     }
 
     function resetMining() {
+        if (miningInterval) {
+            clearInterval(miningInterval);
+            miningInterval = null;
+        }
         const screen = document.getElementById('mining-screen');
         screen.classList.remove('is-mining', 'is-done', 'is-lost');
         document.getElementById('live-nonce').textContent = '0';
         document.getElementById('live-hash').textContent = 'Calculating first hash...';
         document.getElementById('live-miners').textContent = '—';
         currentMiningAddress = null;
-    }
+}
 
     // ─── SEND TRANSACTION ─────────────────────────────────────────────────
     async function sendTransaction() {
