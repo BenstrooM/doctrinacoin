@@ -8,14 +8,8 @@ port = int(os.environ.get("PORT", 5000))
 app = Flask(__name__)
 blockchain = Blockchain()
 
-mining_status = {
-    "is_mining": False,
-    "message": "",
-    "block_index": None,
-    "hash": None,
-    "transactions": None,
-    "queue": []
-}
+# per-miner status tracking: address -> {status, block_index, hash, transactions}
+active_miners = {}
 
 @app.route("/wallet/new", methods=["GET"]) # vytvoreni nove penezenky
 def new_wallet():
@@ -56,55 +50,55 @@ def new_transaction():
     
 @app.route("/mine", methods=["POST"])
 def mine():
-    global mining_status
-
     data = request.get_json()
 
     if "miner_address" not in data:
         return jsonify({"error": "Missing miner address"}), 400
 
-    if mining_status["is_mining"]:
-        mining_status["queue"].append(data["miner_address"])
-        position = len(mining_status["queue"])
-        return jsonify({"message": f"Added to queue! Position {position}"}), 202
+    address = data["miner_address"]
 
-    def run_mining(address):
-        global mining_status
+    # prevent same address from mining twice at once
+    if address in active_miners and active_miners[address]["status"] == "mining":
+        return jsonify({"error": "You are already mining!"}), 400
 
-        blockchain.mine_pending_transactions(address)
-        last_block = blockchain.get_last_block()
+    def run_mining(miner_address):
+        result = blockchain.mine_pending_transactions(miner_address)
+        
+        if result:
+            last_block = blockchain.get_last_block()
+            active_miners[miner_address] = {
+                "status": "won",
+                "block_index": last_block.index,
+                "hash": last_block.hash,
+                "transactions": last_block.transactions
+            }
+        else:
+            active_miners[miner_address] = {
+                "status": "lost",
+                "block_index": None,
+                "hash": None,
+                "transactions": None
+            }
 
-        mining_status["is_mining"] = False
-        mining_status["message"] = "Block mined successfully!"
-        mining_status["block_index"] = last_block.index
-        mining_status["hash"] = last_block.hash
-        mining_status["transactions"] = last_block.transactions
+    # set status before starting thread to avoid race condition
+    active_miners[address] = {
+        "status": "mining",
+        "block_index": None,
+        "hash": None,
+        "transactions": None
+    }
 
-        if mining_status["queue"]:
-            next_miner = mining_status["queue"].pop(0)
-            mining_status["is_mining"] = True
-            mining_status["hash"] = None
-            mining_status["block_index"] = None
-            mining_status["transactions"] = None
-            mining_status["message"] = ""
-            thread = threading.Thread(target=run_mining, args=(next_miner,))
-            thread.start()
-
-    # Set status BEFORE starting the thread so polls immediately see is_mining: true
-    mining_status["is_mining"] = True
-    mining_status["hash"] = None
-    mining_status["block_index"] = None
-    mining_status["transactions"] = None
-    mining_status["message"] = ""
-
-    thread = threading.Thread(target=run_mining, args=(data["miner_address"],))
+    thread = threading.Thread(target=run_mining, args=(address,))
     thread.start()
 
     return jsonify({"message": "Mining started!"})
 
 @app.route("/mine/status", methods=["GET"])
 def mine_status():
-    return jsonify(mining_status)
+    address = request.args.get("address")
+    if not address or address not in active_miners:
+        return jsonify({"status": "idle"})
+    return jsonify(active_miners[address])
 
 @app.route("/mine/progress", methods=["GET"])
 def mine_progress():
@@ -122,8 +116,12 @@ def mine_progress():
         else:
             estimate = "Calculating..."
 
+        # count how many miners are currently active
+        mining_count = sum(1 for m in active_miners.values() if m["status"] == "mining")
+
         return jsonify({
-            "is_mining": mining_status["is_mining"],
+            "is_mining": mining_count > 0,
+            "active_miners": mining_count,
             "current_nonce": nonce,
             "current_hash": blockchain.current_hash_attempt,
             "hashes_per_second": int(hps),
@@ -132,7 +130,8 @@ def mine_progress():
     except Exception as e:
         return jsonify({
             "error": str(e),
-            "is_mining": mining_status["is_mining"],
+            "is_mining": False,
+            "active_miners": 0,
             "current_nonce": blockchain.current_nonce,
             "current_hash": blockchain.current_hash_attempt,
             "hashes_per_second": 0,

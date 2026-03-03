@@ -325,11 +325,14 @@
         .mining-idle { display: block; }
         .mining-active { display: none; }
         .mining-done { display: none; }
+        .mining-lost { display: none; }
 
         .mining-screen.is-mining .mining-idle { display: none; }
         .mining-screen.is-mining .mining-active { display: block; }
         .mining-screen.is-done .mining-idle { display: none; }
         .mining-screen.is-done .mining-done { display: block; }
+        .mining-screen.is-lost .mining-idle { display: none; }
+        .mining-screen.is-lost .mining-lost { display: block; }
 
         .mining-spinner {
             width: 80px;
@@ -716,6 +719,10 @@
                         <div class="mining-stat-val" id="live-eta">—</div>
                         <div class="mining-stat-lbl">Est. remaining</div>
                     </div>
+                    <div class="mining-stat">
+                        <div class="mining-stat-val" id="live-miners">—</div>
+                        <div class="mining-stat-lbl">Active miners</div>
+                    </div>
                 </div>
             </div>
 
@@ -725,6 +732,13 @@
                 <div style="color:var(--text-dim); font-size:0.78rem;" id="done-block-index"></div>
                 <div class="success-hash" id="done-hash"></div>
                 <button class="btn btn-mine" style="max-width:300px; margin:24px auto 0; display:block;" onclick="resetMining()">Mine Another Block</button>
+            </div>
+
+            <div class="mining-lost">
+                <div style="font-size:3rem; margin-bottom:16px;">❌</div>
+                <div style="font-family:var(--display); font-size:1.3rem; font-weight:800; color:var(--danger); margin-bottom:8px;">Race Lost</div>
+                <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:24px;">Another miner found the block first. No reward this time.</div>
+                <button class="btn btn-mine" style="max-width:300px; margin:0 auto; display:block;" onclick="resetMining()">Try Again</button>
             </div>
 
         </div>
@@ -880,10 +894,13 @@
 
     // ─── MINING ───────────────────────────────────────────────────────────
     let miningInterval = null;
+    let currentMiningAddress = null;
 
     async function startMining() {
         const address = document.getElementById('mine-address').value.trim();
         if (!address) { alert('Enter your wallet address first!'); return; }
+
+        currentMiningAddress = address;
 
         const res = await fetch('/mine', {
             method: 'POST',
@@ -898,6 +915,7 @@
         screen.classList.add('is-mining');
 
         miningInterval = setInterval(async () => {
+            // get live progress (global)
             const prog = await fetch('/mine/progress').then(r => r.json());
 
             if (prog.is_mining) {
@@ -905,25 +923,35 @@
                 document.getElementById('live-hash').innerHTML = formatHash(prog.current_hash);
                 document.getElementById('live-hps').textContent = prog.hashes_per_second.toLocaleString();
                 document.getElementById('live-eta').textContent = prog.estimated_remaining;
-            } else {
-                const status = await fetch('/mine/status').then(r => r.json());
-                if (status.hash) {
-                    clearInterval(miningInterval);
-                    screen.classList.remove('is-mining');
-                    screen.classList.add('is-done');
-                    document.getElementById('done-block-index').textContent = 'Block #' + status.block_index + ' added to the chain';
-                    document.getElementById('done-hash').innerHTML = formatHash(status.hash);
-                    refreshMyBalance();
-                }
+                document.getElementById('live-miners').textContent = prog.active_miners || '—';
+            }
+
+            // check this miner's personal status
+            const status = await fetch(`/mine/status?address=${encodeURIComponent(currentMiningAddress)}`).then(r => r.json());
+
+            if (status.status === 'won') {
+                clearInterval(miningInterval);
+                screen.classList.remove('is-mining');
+                screen.classList.add('is-done');
+                document.getElementById('done-block-index').textContent = 'Block #' + status.block_index + ' added to the chain';
+                document.getElementById('done-hash').innerHTML = formatHash(status.hash);
+                refreshMyBalance();
+            } else if (status.status === 'lost') {
+                clearInterval(miningInterval);
+                screen.classList.remove('is-mining');
+                screen.classList.add('is-lost');
+                refreshMyBalance();
             }
         }, 100);
     }
 
     function resetMining() {
         const screen = document.getElementById('mining-screen');
-        screen.classList.remove('is-mining', 'is-done');
+        screen.classList.remove('is-mining', 'is-done', 'is-lost');
         document.getElementById('live-nonce').textContent = '0';
         document.getElementById('live-hash').textContent = 'Calculating first hash...';
+        document.getElementById('live-miners').textContent = '—';
+        currentMiningAddress = null;
     }
 
     // ─── SEND TRANSACTION ─────────────────────────────────────────────────
@@ -1027,17 +1055,17 @@
 
     // ─── INIT ─────────────────────────────────────────────────────────────
     window.onload = () => {
-    const stored = loadStoredWallet();
-    if (stored.address) {
-        document.getElementById('mine-address').value = stored.address;
-        document.getElementById('send-sender').value = stored.address;
-        document.getElementById('send-private-key').value = stored.privateKey;
-    }
-    setTimeout(() => {
-        loadDashboard();
-        if (stored.address) refreshMyBalance();
-    }, 1000);
-};
+        const stored = loadStoredWallet();
+        if (stored.address) {
+            document.getElementById('mine-address').value = stored.address;
+            document.getElementById('send-sender').value = stored.address;
+            document.getElementById('send-private-key').value = stored.privateKey;
+        }
+        setTimeout(() => {
+            loadDashboard();
+            if (stored.address) refreshMyBalance();
+        }, 1000);
+    };
 </script>
 
 </body>

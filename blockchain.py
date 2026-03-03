@@ -6,12 +6,13 @@ import time
 import os
 import ssl
 import certifi
+import threading
 from ecdsa import SigningKey, VerifyingKey, SECP256k1, BadSignatureError 
 
 # bloky
 
 class Block:   
-    def __init__(self, index, transactions, previous_hash, nonce=0):
+    def __init__(self, index, transactions, previous_hash, nonce=0): # spusti se pokazde, kdyz se vytvori novy block
         self.index = index 
         self.transactions = transactions 
         self.previous_hash = previous_hash  
@@ -19,14 +20,14 @@ class Block:
         self.timestamp = time.time()
         self.hash = self.calculate_hash()
 
-    def calculate_hash(self):
+    def calculate_hash(self): # prevede data bloku do JSON formatu a zahashuje pomoci sha256
         block_string = json.dumps({
             "index": self.index,
             "transactions": self.transactions,
             "previous_hash": self.previous_hash,
             "nonce": self.nonce,
             "timestamp": self.timestamp
-        }, sort_keys=True)
+        }, sort_keys=True) # zajistuje spravnost poradi klicu
         return hashlib.sha256(block_string.encode()).hexdigest()
     
 # samotny blockchain
@@ -40,6 +41,8 @@ class Blockchain:
         self.current_nonce = 0
         self.current_hash_attempt = ""
         self.hashes_per_second = 0
+        self.mining_generation = 0
+        self.chain_lock = threading.Lock()
         if not self.load_chain():
             self.create_genesis_block()
     
@@ -54,36 +57,54 @@ class Blockchain:
             return None
         from pymongo import MongoClient
         return MongoClient(mongo_uri, tls=True, tlsCAFile=certifi.where(),
-                       serverSelectionTimeoutMS=5000)
+                           serverSelectionTimeoutMS=5000)
     
     def get_last_block(self):
-        return self.chain[-1]
+        return self.chain[-1] #posledni blok v retezci
     
-    def mine_pending_transactions(self, miner_address):
-        reward_transaction = {
+    def mine_pending_transactions(self, miner_address): # funkce pro tezeni bloku
+        generation = self.mining_generation
+
+        reward_transaction = { # odmena pro minera
             "sender": "NETWORK",
             "recipient": miner_address,
             "amount": self.mining_reward
         }
-        self.pending_transactions.append(reward_transaction)
+        transactions = self.pending_transactions.copy()
+        transactions.append(reward_transaction)
 
-        new_block = Block(
+        new_block = Block( # vytvoreni noveho bloku (do ktereho se pridaji transakce z mempoolu)
             index=len(self.chain),
-            transactions=self.pending_transactions,
+            transactions=transactions,
             previous_hash=self.get_last_block().hash
         )
 
-        new_block = self.proof_of_work(new_block)
-        self.chain.append(new_block)
-        self.pending_transactions = []
-        self.save_chain()
+        new_block = self.proof_of_work(new_block, generation) # proof of work v novem bloku
 
-    def proof_of_work(self, block):
+        if new_block is None:
+            return False
+
+        with self.chain_lock:
+            if self.mining_generation != generation:
+                return False
+            self.chain.append(new_block)
+            self.pending_transactions = []
+            self.mining_generation += 1
+            self.save_chain()
+            return True
+
+    def proof_of_work(self, block, generation):
         block.nonce = 0
         computed_hash = block.calculate_hash()
         start_time = time.time()
 
         while not computed_hash.startswith("0" * self.difficulty):
+            if self.mining_generation != generation:
+                self.current_nonce = 0
+                self.current_hash_attempt = ""
+                self.hashes_per_second = 0
+                return None
+
             block.nonce += 1
             computed_hash = block.calculate_hash()
             self.current_nonce = block.nonce
@@ -119,7 +140,7 @@ class Blockchain:
         }
         self.pending_transactions.append(transaction)
     
-    def verify_transaction(self, sender, recipient, amount, signature, public_key_hex):
+    def verify_transaction(self, sender, recipient, amount, signature, public_key_hex): # overeni transakce pomoci ECDSA podpisu
         try:
             public_key = VerifyingKey.from_string(
                 bytes.fromhex(public_key_hex), 
@@ -130,7 +151,7 @@ class Blockchain:
         except BadSignatureError:
             return False
         
-    def get_balance(self, address):
+    def get_balance(self, address): # funkce pro checkovani zustatku na adrese
         balance = 0
         for block in self.chain:
             for transaction in block.transactions:
@@ -140,7 +161,7 @@ class Blockchain:
                     balance += transaction["amount"]
         return balance
 
-    def is_chain_valid(self):
+    def is_chain_valid(self): # kontrola integrity blockchainu
         for i in range(1, len(self.chain)):
             current = self.chain[i]
             previous = self.chain[i - 1]
