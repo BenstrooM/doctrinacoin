@@ -4,7 +4,6 @@ import hashlib
 import json
 import time 
 import os
-import ssl
 from ecdsa import SigningKey, VerifyingKey, SECP256k1, BadSignatureError 
 
 # bloky
@@ -144,23 +143,26 @@ class Blockchain:
     def save_chain(self):
         mongo_uri = os.environ.get("MONGO_URI")
         if mongo_uri:
-            from pymongo import MongoClient
-            client = MongoClient(mongo_uri, ssl=True, ssl_cert_reqs=ssl.CERT_NONE)
-            db = client["doctrinacoin"]
-            collection = db["chain"]
-            chain_data = []
-            for block in self.chain:
-                chain_data.append({
-                    "index": block.index,
-                    "transactions": block.transactions,
-                    "previous_hash": block.previous_hash,
-                    "nonce": block.nonce,
-                    "timestamp": block.timestamp,
-                    "hash": block.hash
-                })
-            collection.delete_many({})
-            collection.insert_many(chain_data)
-            client.close()
+            try:
+                from pymongo import MongoClient
+                client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=5000)
+                db = client["doctrinacoin"]
+                collection = db["chain"]
+                chain_data = []
+                for block in self.chain:
+                    chain_data.append({
+                        "index": block.index,
+                        "transactions": block.transactions,
+                        "previous_hash": block.previous_hash,
+                        "nonce": block.nonce,
+                        "timestamp": block.timestamp,
+                        "hash": block.hash
+                    })
+                collection.delete_many({})
+                collection.insert_many(chain_data)
+                client.close()
+            except Exception as e:
+                print(f"MongoDB save failed: {e}")
         else:
             chain_data = []
             for block in self.chain:
@@ -180,7 +182,7 @@ class Blockchain:
         if mongo_uri:
             try:
                 from pymongo import MongoClient
-                client = MongoClient(mongo_uri, ssl=True, ssl_cert_reqs=ssl.CERT_NONE)
+                client = MongoClient(mongo_uri, tlsAllowInvalidCertificates=True, serverSelectionTimeoutMS=5000)
                 db = client["doctrinacoin"]
                 collection = db["chain"]
                 chain_data = list(collection.find({}, {"_id": 0}).sort("index", 1))
@@ -198,7 +200,8 @@ class Blockchain:
                     block.hash = block_data["hash"]
                     self.chain.append(block)
                 return True
-            except Exception:
+            except Exception as e:
+                print(f"MongoDB load failed: {e}")
                 return False
         else:
             try:
