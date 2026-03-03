@@ -82,11 +82,21 @@ def mine():
 
         if mining_status["queue"]:
             next_miner = mining_status["queue"].pop(0)
+            mining_status["is_mining"] = True
+            mining_status["hash"] = None
+            mining_status["block_index"] = None
+            mining_status["transactions"] = None
+            mining_status["message"] = ""
             thread = threading.Thread(target=run_mining, args=(next_miner,))
             thread.start()
 
+    # Set status BEFORE starting the thread so polls immediately see is_mining: true
+    mining_status["is_mining"] = True
     mining_status["hash"] = None
+    mining_status["block_index"] = None
+    mining_status["transactions"] = None
     mining_status["message"] = ""
+
     thread = threading.Thread(target=run_mining, args=(data["miner_address"],))
     thread.start()
 
