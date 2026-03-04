@@ -1217,12 +1217,22 @@
         // ─── MINING ───────────────────────────────────────────────────────────
         let miningInterval = null;
         let currentMiningAddress = null;
+        let lastWonBlockIndex = null;
 
         async function startMining() {
             const address = document.getElementById('mine-address').value.trim();
             if (!address) { alert('Enter your wallet address first!'); return; }
 
             currentMiningAddress = address;
+
+            // remember the current won block so we dont re-trigger on it
+            lastWonBlockIndex = null;
+            try {
+                const existingStatus = await fetch(`/mine/status?address=${encodeURIComponent(address)}`).then(r => r.json());
+                if (existingStatus.status === 'won') {
+                    lastWonBlockIndex = existingStatus.block_index;
+                }
+            } catch (e) { }
 
             const res = await fetch('/mine', {
                 method: 'POST',
@@ -1251,7 +1261,7 @@
 
                 const status = await fetch(`/mine/status?address=${encodeURIComponent(currentMiningAddress)}`).then(r => r.json());
 
-                if (status.status === 'won') {
+                if (status.status === 'won' && status.block_index !== lastWonBlockIndex) {
                     clearInterval(miningInterval);
                     miningInterval = null;
                     screen.classList.remove('is-mining');
@@ -1268,7 +1278,6 @@
                 }
             }, 50);
         }
-
         function resetMining() {
             if (miningInterval) {
                 clearInterval(miningInterval);
