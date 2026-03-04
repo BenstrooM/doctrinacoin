@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DoctrinaCoin</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --bg: #080b0f;
@@ -22,14 +25,18 @@
             --display: 'Syne', sans-serif;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
             background: var(--bg);
             color: var(--text);
             font-family: var(--mono);
             min-height: 100vh;
-            background-image: 
+            background-image:
                 linear-gradient(rgba(0, 229, 255, 0.02) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(0, 229, 255, 0.02) 1px, transparent 1px);
             background-size: 40px 40px;
@@ -71,8 +78,17 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 12px var(--accent); }
-            50% { opacity: 0.4; box-shadow: 0 0 4px var(--accent); }
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 12px var(--accent);
+            }
+
+            50% {
+                opacity: 0.4;
+                box-shadow: 0 0 4px var(--accent);
+            }
         }
 
         .ticker {
@@ -126,7 +142,9 @@
             transition: all 0.2s;
         }
 
-        .tab:hover { color: var(--text); }
+        .tab:hover {
+            color: var(--text);
+        }
 
         .tab.active {
             color: var(--accent);
@@ -134,10 +152,19 @@
         }
 
         /* MAIN */
-        main { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+        main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
 
-        .section { display: none; }
-        .section.active { display: block; }
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+        }
 
         /* CARDS */
         .card {
@@ -152,7 +179,9 @@
         .card::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0;
+            top: 0;
+            left: 0;
+            right: 0;
             height: 1px;
             background: linear-gradient(90deg, transparent, var(--accent), transparent);
             opacity: 0.3;
@@ -168,10 +197,27 @@
             margin-bottom: 20px;
         }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
-        .span-2 { grid-column: span 2; }
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 20px;
+        }
+
+        .span-2 {
+            grid-column: span 2;
+        }
 
         /* INPUTS */
         input {
@@ -188,8 +234,13 @@
             transition: border 0.2s;
         }
 
-        input:focus { border-color: var(--accent); }
-        input::placeholder { color: var(--text-dim); }
+        input:focus {
+            border-color: var(--accent);
+        }
+
+        input::placeholder {
+            color: var(--text-dim);
+        }
 
         /* BUTTONS */
         .btn {
@@ -254,7 +305,9 @@
             word-break: break-all;
         }
 
-        .result.visible { display: block; }
+        .result.visible {
+            display: block;
+        }
 
         .result-row {
             display: flex;
@@ -263,7 +316,9 @@
             margin-bottom: 12px;
         }
 
-        .result-row:last-child { margin-bottom: 0; }
+        .result-row:last-child {
+            margin-bottom: 0;
+        }
 
         .result-label {
             font-size: 0.65rem;
@@ -278,9 +333,20 @@
             line-height: 1.4;
         }
 
-        .result-value.green { color: var(--accent2); }
-        .result-value.orange { color: var(--accent3); }
-        .result-value.white { color: var(--text-bright); font-size: 1.4rem; font-family: var(--display); font-weight: 700; }
+        .result-value.green {
+            color: var(--accent2);
+        }
+
+        .result-value.orange {
+            color: var(--accent3);
+        }
+
+        .result-value.white {
+            color: var(--text-bright);
+            font-size: 1.4rem;
+            font-family: var(--display);
+            font-weight: 700;
+        }
 
         /* DASHBOARD STATS */
         .stat-card {
@@ -323,17 +389,45 @@
             overflow: hidden;
         }
 
-        .mining-idle { display: block; }
-        .mining-active { display: none; }
-        .mining-done { display: none; }
-        .mining-lost { display: none; }
+        .mining-idle {
+            display: block;
+        }
 
-        .mining-screen.is-mining .mining-idle { display: none; }
-        .mining-screen.is-mining .mining-active { display: block; }
-        .mining-screen.is-done .mining-idle { display: none; }
-        .mining-screen.is-done .mining-done { display: block; }
-        .mining-screen.is-lost .mining-idle { display: none; }
-        .mining-screen.is-lost .mining-lost { display: block; }
+        .mining-active {
+            display: none;
+        }
+
+        .mining-done {
+            display: none;
+        }
+
+        .mining-lost {
+            display: none;
+        }
+
+        .mining-screen.is-mining .mining-idle {
+            display: none;
+        }
+
+        .mining-screen.is-mining .mining-active {
+            display: block;
+        }
+
+        .mining-screen.is-done .mining-idle {
+            display: none;
+        }
+
+        .mining-screen.is-done .mining-done {
+            display: block;
+        }
+
+        .mining-screen.is-lost .mining-idle {
+            display: none;
+        }
+
+        .mining-screen.is-lost .mining-lost {
+            display: block;
+        }
 
         .mining-spinner {
             width: 80px;
@@ -345,7 +439,11 @@
             animation: spin 0.8s linear infinite;
         }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
 
         .mining-nonce {
             font-family: var(--display);
@@ -377,7 +475,9 @@
             min-height: 48px;
         }
 
-        .mining-hash-display .zeros { color: var(--accent2); }
+        .mining-hash-display .zeros {
+            color: var(--accent2);
+        }
 
         .mining-stats-row {
             display: flex;
@@ -386,9 +486,22 @@
             font-size: 0.75rem;
         }
 
-        .mining-stat { text-align: center; }
-        .mining-stat-val { color: var(--accent); font-weight: 700; font-size: 0.9rem; }
-        .mining-stat-lbl { color: var(--text-dim); font-size: 0.65rem; letter-spacing: 1px; margin-top: 2px; }
+        .mining-stat {
+            text-align: center;
+        }
+
+        .mining-stat-val {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .mining-stat-lbl {
+            color: var(--text-dim);
+            font-size: 0.65rem;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
 
         .success-icon {
             font-size: 3rem;
@@ -458,7 +571,9 @@
             transition: border-color 0.2s;
         }
 
-        .block-card:hover { border-color: var(--accent); }
+        .block-card:hover {
+            border-color: var(--accent);
+        }
 
         .block-header {
             display: flex;
@@ -486,7 +601,10 @@
             margin-bottom: 12px;
         }
 
-        .block-hash .zeros { color: var(--accent2); font-weight: 700; }
+        .block-hash .zeros {
+            color: var(--accent2);
+            font-weight: 700;
+        }
 
         .block-meta {
             display: flex;
@@ -495,7 +613,9 @@
             color: var(--text-dim);
         }
 
-        .block-meta span { color: var(--text); }
+        .block-meta span {
+            color: var(--text);
+        }
 
         .tx-row {
             padding: 10px 14px;
@@ -524,10 +644,28 @@
             white-space: nowrap;
         }
 
-        .tx-addr.network { color: var(--accent3); }
-        .tx-arrow { color: var(--text-dim); flex-shrink: 0; }
-        .tx-amount { color: var(--accent2); font-weight: 700; flex-shrink: 0; margin-left: 16px; }
-        .tx-fee { color: var(--accent3); font-size: 0.65rem; flex-shrink: 0; margin-left: 8px; }
+        .tx-addr.network {
+            color: var(--accent3);
+        }
+
+        .tx-arrow {
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+
+        .tx-amount {
+            color: var(--accent2);
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-left: 16px;
+        }
+
+        .tx-fee {
+            color: var(--accent3);
+            font-size: 0.65rem;
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
 
         .empty-state {
             text-align: center;
@@ -572,10 +710,22 @@
             transition: all 0.2s;
         }
 
-        .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .refresh-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
 
-        .msg-success { color: var(--accent2); margin-top: 10px; font-size: 0.78rem; }
-        .msg-error { color: var(--danger); margin-top: 10px; font-size: 0.78rem; }
+        .msg-success {
+            color: var(--accent2);
+            margin-top: 10px;
+            font-size: 0.78rem;
+        }
+
+        .msg-error {
+            color: var(--danger);
+            margin-top: 10px;
+            font-size: 0.78rem;
+        }
 
         .divider {
             border: none;
@@ -584,321 +734,354 @@
         }
 
         /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--bg); }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
 
         /* ANIMATIONS */
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .section.active { animation: fadeIn 0.3s ease; }
+        .section.active {
+            animation: fadeIn 0.3s ease;
+        }
 
         .highlight-zeros {
             color: var(--accent2);
         }
     </style>
 </head>
+
 <body>
 
-<header>
-    <div class="logo">
-        <div class="logo-dot"></div>
-        DoctrinaCoin
-        <span class="ticker">DCT</span>
-    </div>
-    <div class="header-wallet" id="header-wallet" style="display:none">
-        <span class="header-address" id="header-address"></span>
-        <span class="header-balance" id="header-balance">0 DCT</span>
-    </div>
-</header>
-
-<nav>
-    <button class="tab active" onclick="showTab('dashboard')">Dashboard</button>
-    <button class="tab" onclick="showTab('wallet')">Wallet</button>
-    <button class="tab" onclick="showTab('mine')">Mine</button>
-    <button class="tab" onclick="showTab('send')">Send</button>
-    <button class="tab" onclick="showTab('explorer')">Explorer</button>
-</nav>
-
-<main>
-
-    <!-- DASHBOARD -->
-    <div class="section active" id="tab-dashboard">
-        <div class="section-header">
-            <div class="section-title">Network Overview</div>
-            <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
+    <header>
+        <div class="logo">
+            <div class="logo-dot"></div>
+            DoctrinaCoin
+            <span class="ticker">DCT</span>
         </div>
-        <div class="grid-4" style="margin-bottom:20px">
-            <div class="stat-card">
-                <div class="stat-label">Total Blocks</div>
-                <div class="stat-value" id="stat-blocks">—<span> blocks</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Your Balance</div>
-                <div class="stat-value" id="stat-balance">—<span> DCT</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Block Reward</div>
-                <div class="stat-value" id="stat-reward">—<span> DCT</span></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Next Halving</div>
-                <div class="stat-value" id="stat-halving">—<span> blocks</span></div>
-            </div>
+        <div class="header-wallet" id="header-wallet" style="display:none">
+            <span class="header-address" id="header-address"></span>
+            <span class="header-balance" id="header-balance">0 DCT</span>
         </div>
-        <div class="grid-2" style="margin-bottom:20px">
-            <div class="stat-card">
-                <div class="stat-label">Chain Valid</div>
-                <div class="stat-value" id="stat-valid">—</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Difficulty</div>
-                <div class="stat-value" id="stat-difficulty">—</div>
-            </div>
-        </div>
-        <div class="card">
-            <div class="card-title">Latest Block</div>
-            <div id="latest-block-display" class="empty-state">Loading...</div>
-        </div>
-    </div>
+    </header>
 
-    <!-- WALLET -->
-    <div class="section" id="tab-wallet">
-        <div class="section-header">
-            <div class="section-title">Your Wallet</div>
-        </div>
+    <nav>
+        <button class="tab active" onclick="showTab('dashboard')">Dashboard</button>
+        <button class="tab" onclick="showTab('wallet')">Wallet</button>
+        <button class="tab" onclick="showTab('mine')">Mine</button>
+        <button class="tab" onclick="showTab('send')">Send</button>
+        <button class="tab" onclick="showTab('explorer')">Explorer</button>
+    </nav>
 
-        <div id="wallet-existing" style="display:none; margin-bottom:20px;">
+    <main>
+
+        <!-- DASHBOARD -->
+        <div class="section active" id="tab-dashboard">
+            <div class="section-header">
+                <div class="section-title">Network Overview</div>
+                <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
+            </div>
+            <div class="grid-4" style="margin-bottom:20px">
+                <div class="stat-card">
+                    <div class="stat-label">Total Blocks</div>
+                    <div class="stat-value" id="stat-blocks">—<span> blocks</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Your Balance</div>
+                    <div class="stat-value" id="stat-balance">—<span> DCT</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Block Reward</div>
+                    <div class="stat-value" id="stat-reward">—<span> DCT</span></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Next Halving</div>
+                    <div class="stat-value" id="stat-halving">—<span> blocks</span></div>
+                </div>
+            </div>
+            <div class="grid-2" style="margin-bottom:20px">
+                <div class="stat-card">
+                    <div class="stat-label">Chain Valid</div>
+                    <div class="stat-value" id="stat-valid">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Difficulty</div>
+                    <div class="stat-value" id="stat-difficulty">—</div>
+                </div>
+            </div>
             <div class="card">
-                <div class="card-title">Active Wallet</div>
-                <div class="wallet-display">
-                    <div class="stat-label">Address</div>
-                    <div class="wallet-address-big" id="my-address"></div>
-                    <div class="stat-label">Balance</div>
-                    <div class="wallet-balance-big"><span id="my-balance">0</span> <span>DCT</span></div>
-                </div>
-                <button class="btn btn-danger" onclick="forgetWallet()">Forget This Wallet</button>
+                <div class="card-title">Latest Block</div>
+                <div id="latest-block-display" class="empty-state">Loading...</div>
             </div>
         </div>
 
-        <div id="wallet-new-section">
-            <div class="card">
-                <div class="card-title">Create Wallet</div>
-                <div class="warning-box">
-                    ⚠ Your private key will be shown once and saved in your browser. Never share it with anyone.
-                </div>
-                <button class="btn btn-primary" onclick="createWallet()">Generate New Wallet</button>
-                <div class="result" id="wallet-result">
-                    <div class="result-row">
-                        <div class="result-label">Address (Public Key)</div>
-                        <div class="result-value" id="wallet-address"></div>
-                    </div>
-                    <div class="result-row">
-                        <div class="result-label">Private Key — save this!</div>
-                        <div class="result-value orange" id="wallet-private"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- MINE -->
-    <div class="section" id="tab-mine">
-        <div class="section-header">
-            <div class="section-title">Mine a Block</div>
-        </div>
-
-        <div class="mining-screen" id="mining-screen">
-
-            <div class="mining-idle">
-                <div style="margin-bottom:24px; font-size:2.5rem;">⛏</div>
-                <div style="font-family:var(--display); font-size:1.1rem; font-weight:800; color:var(--text-bright); margin-bottom:8px;">Ready to Mine</div>
-                <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:8px;">Mine pending transactions and earn the block reward + fees</div>
-                <div style="color:var(--accent2); font-size:0.78rem; margin-bottom:32px;" id="mine-reward-display">Current reward: — DCT</div>
-                <input type="text" id="mine-address" placeholder="Your wallet address (to receive reward)" style="max-width:600px; margin:0 auto 16px; display:block;" />
-                <button class="btn btn-mine" style="max-width:300px; margin:0 auto; display:block;" onclick="startMining()">Start Mining</button>
+        <!-- WALLET -->
+        <div class="section" id="tab-wallet">
+            <div class="section-header">
+                <div class="section-title">Your Wallet</div>
             </div>
 
-            <div class="mining-active">
-                <div class="mining-spinner"></div>
-                <div class="mining-nonce" id="live-nonce">0</div>
-                <div class="mining-label">nonces tried</div>
-                <div class="mining-hash-display" id="live-hash">Calculating first hash...</div>
-                <div class="mining-stats-row">
-                    <div class="mining-stat">
-                        <div class="mining-stat-val" id="live-hps">—</div>
-                        <div class="mining-stat-lbl">Hashes / sec</div>
+            <div id="wallet-existing" style="display:none; margin-bottom:20px;">
+                <div class="card">
+                    <div class="card-title">Active Wallet</div>
+                    <div class="wallet-display">
+                        <div class="stat-label">Address</div>
+                        <div class="wallet-address-big" id="my-address"></div>
+                        <div class="stat-label">Balance</div>
+                        <div class="wallet-balance-big"><span id="my-balance">0</span> <span>DCT</span></div>
                     </div>
-                    <div class="mining-stat">
-                        <div class="mining-stat-val" id="live-eta">—</div>
-                        <div class="mining-stat-lbl">Est. remaining</div>
-                    </div>
-                    <div class="mining-stat">
-                        <div class="mining-stat-val" id="live-miners">—</div>
-                        <div class="mining-stat-lbl">Active miners</div>
-                    </div>
+                    <button class="btn btn-danger" onclick="forgetWallet()">Forget This Wallet</button>
                 </div>
             </div>
 
-            <div class="mining-done">
-                <div class="success-icon">✅</div>
-                <div style="font-family:var(--display); font-size:1.3rem; font-weight:800; color:var(--text-bright); margin-bottom:8px;">Block Mined!</div>
-                <div style="color:var(--text-dim); font-size:0.78rem;" id="done-block-index"></div>
-                <div class="success-hash" id="done-hash"></div>
-                <button class="btn btn-mine" style="max-width:300px; margin:24px auto 0; display:block;" onclick="resetMining()">Mine Another Block</button>
+            <div id="wallet-new-section">
+                <div class="card">
+                    <div class="card-title">Create Wallet</div>
+                    <div class="warning-box">
+                        ⚠ Your private key will be shown once and saved in your browser. Never share it with anyone.
+                    </div>
+                    <button class="btn btn-primary" onclick="createWallet()">Generate New Wallet</button>
+                    <div class="result" id="wallet-result">
+                        <div class="result-row">
+                            <div class="result-label">Address (Public Key)</div>
+                            <div class="result-value" id="wallet-address"></div>
+                        </div>
+                        <div class="result-row">
+                            <div class="result-label">Private Key — save this!</div>
+                            <div class="result-value orange" id="wallet-private"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MINE -->
+        <div class="section" id="tab-mine">
+            <div class="section-header">
+                <div class="section-title">Mine a Block</div>
             </div>
 
-            <div class="mining-lost">
-                <div style="font-size:3rem; margin-bottom:16px;">❌</div>
-                <div style="font-family:var(--display); font-size:1.3rem; font-weight:800; color:var(--danger); margin-bottom:8px;">Race Lost</div>
-                <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:24px;">Another miner found the block first. No reward this time.</div>
-                <button class="btn btn-mine" style="max-width:300px; margin:0 auto; display:block;" onclick="resetMining()">Try Again</button>
+            <div class="mining-screen" id="mining-screen">
+
+                <div class="mining-idle">
+                    <div style="margin-bottom:24px; font-size:2.5rem;">⛏</div>
+                    <div
+                        style="font-family:var(--display); font-size:1.1rem; font-weight:800; color:var(--text-bright); margin-bottom:8px;">
+                        Ready to Mine</div>
+                    <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:8px;">Mine pending transactions
+                        and earn the block reward + fees</div>
+                    <div style="color:var(--accent2); font-size:0.78rem; margin-bottom:32px;" id="mine-reward-display">
+                        Current reward: — DCT</div>
+                    <input type="text" id="mine-address" placeholder="Your wallet address (to receive reward)"
+                        style="max-width:600px; margin:0 auto 16px; display:block;" />
+                    <button class="btn btn-mine" style="max-width:300px; margin:0 auto; display:block;"
+                        onclick="startMining()">Start Mining</button>
+                </div>
+
+                <div class="mining-active">
+                    <div class="mining-spinner"></div>
+                    <div class="mining-nonce" id="live-nonce">0</div>
+                    <div class="mining-label">nonces tried</div>
+                    <div class="mining-hash-display" id="live-hash">Calculating first hash...</div>
+                    <div class="mining-stats-row">
+                        <div class="mining-stat">
+                            <div class="mining-stat-val" id="live-hps">—</div>
+                            <div class="mining-stat-lbl">Hashes / sec</div>
+                        </div>
+                        <div class="mining-stat">
+                            <div class="mining-stat-val" id="live-eta">—</div>
+                            <div class="mining-stat-lbl">Est. remaining</div>
+                        </div>
+                        <div class="mining-stat">
+                            <div class="mining-stat-val" id="live-miners">—</div>
+                            <div class="mining-stat-lbl">Active miners</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mining-done">
+                    <div class="success-icon">✅</div>
+                    <div
+                        style="font-family:var(--display); font-size:1.3rem; font-weight:800; color:var(--text-bright); margin-bottom:8px;">
+                        Block Mined!</div>
+                    <div style="color:var(--text-dim); font-size:0.78rem;" id="done-block-index"></div>
+                    <div class="success-hash" id="done-hash"></div>
+                    <button class="btn btn-mine" style="max-width:300px; margin:24px auto 0; display:block;"
+                        onclick="resetMining()">Mine Another Block</button>
+                </div>
+
+                <div class="mining-lost">
+                    <div style="font-size:3rem; margin-bottom:16px;">❌</div>
+                    <div
+                        style="font-family:var(--display); font-size:1.3rem; font-weight:800; color:var(--danger); margin-bottom:8px;">
+                        Race Lost</div>
+                    <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:24px;">Another miner found the
+                        block first. No reward this time.</div>
+                    <button class="btn btn-mine" style="max-width:300px; margin:0 auto; display:block;"
+                        onclick="resetMining()">Try Again</button>
+                </div>
+
             </div>
-
         </div>
-    </div>
 
-    <!-- SEND -->
-    <div class="section" id="tab-send">
-        <div class="section-header">
-            <div class="section-title">Send DoctrinaCoin</div>
+        <!-- SEND -->
+        <div class="section" id="tab-send">
+            <div class="section-header">
+                <div class="section-title">Send DoctrinaCoin</div>
+            </div>
+            <div class="card" style="max-width:600px;">
+                <div class="card-title">New Transaction</div>
+                <input type="text" id="send-sender" placeholder="Your address (sender)" />
+                <input type="text" id="send-private-key" placeholder="Your private key" />
+                <input type="text" id="send-recipient" placeholder="Recipient address" />
+                <input type="number" id="send-amount" placeholder="Amount (DCT)" />
+                <input type="number" id="send-fee" placeholder="Fee — optional, incentivizes miners (DCT)" step="0.01"
+                    min="0" />
+                <button class="btn btn-primary" onclick="sendTransaction()">Send DCT</button>
+                <div id="send-msg"></div>
+            </div>
         </div>
-        <div class="card" style="max-width:600px;">
-            <div class="card-title">New Transaction</div>
-            <input type="text" id="send-sender" placeholder="Your address (sender)" />
-            <input type="text" id="send-private-key" placeholder="Your private key" />
-            <input type="text" id="send-recipient" placeholder="Recipient address" />
-            <input type="number" id="send-amount" placeholder="Amount (DCT)" />
-            <input type="number" id="send-fee" placeholder="Fee — optional, incentivizes miners (DCT)" step="0.01" min="0" />
-            <button class="btn btn-primary" onclick="sendTransaction()">Send DCT</button>
-            <div id="send-msg"></div>
+
+        <!-- EXPLORER -->
+        <div class="section" id="tab-explorer">
+            <div class="section-header">
+                <div class="section-title">Blockchain Explorer</div>
+                <button class="refresh-btn" onclick="loadExplorer()">↻ Refresh</button>
+            </div>
+            <div id="explorer-content">
+                <div class="empty-state">Loading blockchain...</div>
+            </div>
         </div>
-    </div>
 
-    <!-- EXPLORER -->
-    <div class="section" id="tab-explorer">
-        <div class="section-header">
-            <div class="section-title">Blockchain Explorer</div>
-            <button class="refresh-btn" onclick="loadExplorer()">↻ Refresh</button>
-        </div>
-        <div id="explorer-content">
-            <div class="empty-state">Loading blockchain...</div>
-        </div>
-    </div>
+    </main>
 
-</main>
+    <script>
+        // ─── TAB NAVIGATION ───────────────────────────────────────────────────
+        function showTab(name) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + name).classList.add('active');
+            event.target.classList.add('active');
 
-<script>
-    // ─── TAB NAVIGATION ───────────────────────────────────────────────────
-    function showTab(name) {
-        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.getElementById('tab-' + name).classList.add('active');
-        event.target.classList.add('active');
-
-        if (name === 'dashboard') loadDashboard();
-        if (name === 'explorer') loadExplorer();
-        if (name === 'wallet') loadWalletTab();
-        if (name === 'mine') loadMineTab();
-    }
-
-    // ─── PERSISTENT WALLET ────────────────────────────────────────────────
-    function saveWallet(address, privateKey) {
-        localStorage.setItem('dct_address', address);
-        localStorage.setItem('dct_private', privateKey);
-    }
-
-    function loadStoredWallet() {
-        return {
-            address: localStorage.getItem('dct_address'),
-            privateKey: localStorage.getItem('dct_private')
-        };
-    }
-
-    function forgetWallet() {
-        if (confirm('Are you sure? Make sure you have saved your private key!')) {
-            localStorage.removeItem('dct_address');
-            localStorage.removeItem('dct_private');
-            location.reload();
+            if (name === 'dashboard') loadDashboard();
+            if (name === 'explorer') loadExplorer();
+            if (name === 'wallet') loadWalletTab();
+            if (name === 'mine') loadMineTab();
         }
-    }
 
-    function loadWalletTab() {
-        const stored = loadStoredWallet();
-        if (stored.address) {
-            document.getElementById('wallet-existing').style.display = 'block';
-            document.getElementById('wallet-new-section').style.display = 'none';
-            document.getElementById('my-address').textContent = stored.address;
-            refreshMyBalance();
-        } else {
-            document.getElementById('wallet-existing').style.display = 'none';
-            document.getElementById('wallet-new-section').style.display = 'block';
+        // ─── PERSISTENT WALLET ────────────────────────────────────────────────
+        function saveWallet(address, privateKey) {
+            localStorage.setItem('dct_address', address);
+            localStorage.setItem('dct_private', privateKey);
         }
-    }
 
-    async function refreshMyBalance() {
-        const stored = loadStoredWallet();
-        if (!stored.address) return;
-        const res = await fetch(`/balance/${stored.address}`);
-        const data = await res.json();
-        document.getElementById('my-balance').textContent = data.balance;
+        function loadStoredWallet() {
+            return {
+                address: localStorage.getItem('dct_address'),
+                privateKey: localStorage.getItem('dct_private')
+            };
+        }
 
-        // update header
-        document.getElementById('header-wallet').style.display = 'flex';
-        document.getElementById('header-address').textContent = stored.address.slice(0, 12) + '...';
-        document.getElementById('header-balance').textContent = data.balance + ' DCT';
-        document.getElementById('stat-balance').innerHTML = data.balance + '<span> DCT</span>';
-    }
+        function forgetWallet() {
+            if (confirm('Are you sure? Make sure you have saved your private key!')) {
+                localStorage.removeItem('dct_address');
+                localStorage.removeItem('dct_private');
+                location.reload();
+            }
+        }
 
-    // ─── CREATE WALLET ────────────────────────────────────────────────────
-    async function createWallet() {
-        const res = await fetch('/wallet/new');
-        const data = await res.json();
+        function loadWalletTab() {
+            const stored = loadStoredWallet();
+            if (stored.address) {
+                document.getElementById('wallet-existing').style.display = 'block';
+                document.getElementById('wallet-new-section').style.display = 'none';
+                document.getElementById('my-address').textContent = stored.address;
+                refreshMyBalance();
+            } else {
+                document.getElementById('wallet-existing').style.display = 'none';
+                document.getElementById('wallet-new-section').style.display = 'block';
+            }
+        }
 
-        document.getElementById('wallet-address').textContent = data.address;
-        document.getElementById('wallet-private').textContent = data.private_key;
-        document.getElementById('wallet-result').classList.add('visible');
+        async function refreshMyBalance() {
+            const stored = loadStoredWallet();
+            if (!stored.address) return;
+            const res = await fetch(`/balance/${stored.address}`);
+            const data = await res.json();
+            document.getElementById('my-balance').textContent = data.balance;
 
-        saveWallet(data.address, data.private_key);
+            // update header
+            document.getElementById('header-wallet').style.display = 'flex';
+            document.getElementById('header-address').textContent = stored.address.slice(0, 12) + '...';
+            document.getElementById('header-balance').textContent = data.balance + ' DCT';
+            document.getElementById('stat-balance').innerHTML = data.balance + '<span> DCT</span>';
+        }
 
-        // auto-fill mine address
-        document.getElementById('mine-address').value = data.address;
-        document.getElementById('send-sender').value = data.address;
-        document.getElementById('send-private-key').value = data.private_key;
+        // ─── CREATE WALLET ────────────────────────────────────────────────────
+        async function createWallet() {
+            const res = await fetch('/wallet/new');
+            const data = await res.json();
 
-        setTimeout(() => loadWalletTab(), 8000);
-    }
+            document.getElementById('wallet-address').textContent = data.address;
+            document.getElementById('wallet-private').textContent = data.private_key;
+            document.getElementById('wallet-result').classList.add('visible');
 
-    // ─── DASHBOARD ────────────────────────────────────────────────────────
-    async function loadDashboard() {
-        document.getElementById('latest-block-display').innerHTML = 
-            '<div class="loading-msg">Connecting to network...</div>';
-        try {
-            const [chainRes, validRes, rewardRes] = await Promise.all([
-                fetch('/chain'),
-                fetch('/validate'),
-                fetch('/reward')
-            ]);
-            const chain = await chainRes.json();
-            const valid = await validRes.json();
-            const reward = await rewardRes.json();
+            saveWallet(data.address, data.private_key);
 
-            document.getElementById('stat-blocks').innerHTML = chain.length + '<span> blocks</span>';
-            document.getElementById('stat-valid').textContent = valid.is_valid ? '✓ Valid' : '✗ Invalid';
-            document.getElementById('stat-valid').style.color = valid.is_valid ? 'var(--accent2)' : 'var(--danger)';
-            document.getElementById('stat-reward').innerHTML = reward.current_reward + '<span> DCT</span>';
-            document.getElementById('stat-halving').innerHTML = reward.next_halving_in + '<span> blocks</span>';
-            document.getElementById('stat-difficulty').textContent = '5';
+            // auto-fill mine address
+            document.getElementById('mine-address').value = data.address;
+            document.getElementById('send-sender').value = data.address;
+            document.getElementById('send-private-key').value = data.private_key;
 
-            await refreshMyBalance();
+            setTimeout(() => loadWalletTab(), 8000);
+        }
 
-            if (chain.chain.length > 0) {
-                const last = chain.chain[chain.chain.length - 1];
-                const date = new Date(last.timestamp * 1000).toLocaleString();
-                document.getElementById('latest-block-display').innerHTML = `
+        // ─── DASHBOARD ────────────────────────────────────────────────────────
+        async function loadDashboard() {
+            document.getElementById('latest-block-display').innerHTML =
+                '<div class="loading-msg">Connecting to network...</div>';
+            try {
+                const [chainRes, validRes, rewardRes] = await Promise.all([
+                    fetch('/chain'),
+                    fetch('/validate'),
+                    fetch('/reward')
+                ]);
+                const chain = await chainRes.json();
+                const valid = await validRes.json();
+                const reward = await rewardRes.json();
+
+                document.getElementById('stat-blocks').innerHTML = chain.length + '<span> blocks</span>';
+                document.getElementById('stat-valid').textContent = valid.is_valid ? '✓ Valid' : '✗ Invalid';
+                document.getElementById('stat-valid').style.color = valid.is_valid ? 'var(--accent2)' : 'var(--danger)';
+                document.getElementById('stat-reward').innerHTML = reward.current_reward + '<span> DCT</span>';
+                document.getElementById('stat-halving').innerHTML = reward.next_halving_in + '<span> blocks</span>';
+                document.getElementById('stat-difficulty').textContent = reward.difficulty;
+
+                await refreshMyBalance();
+
+                if (chain.chain.length > 0) {
+                    const last = chain.chain[chain.chain.length - 1];
+                    const date = new Date(last.timestamp * 1000).toLocaleString();
+                    document.getElementById('latest-block-display').innerHTML = `
                     <div class="block-header">
                         <div class="block-index">Block #${last.index}</div>
                         <div class="block-time">${date}</div>
@@ -909,158 +1092,158 @@
                         &nbsp;&nbsp;Transactions: <span>${last.transactions.length}</span>
                     </div>
                 `;
+                }
+            } catch (e) {
+                document.getElementById('latest-block-display').innerHTML =
+                    '<div class="loading-msg">Waiting for server to wake up... please wait a moment and refresh.</div>';
             }
-        } catch (e) {
-            document.getElementById('latest-block-display').innerHTML = 
-                '<div class="loading-msg">Waiting for server to wake up... please wait a moment and refresh.</div>';
         }
-    }
 
-    // ─── MINE TAB ─────────────────────────────────────────────────────────
-    async function loadMineTab() {
-        try {
-            const res = await fetch('/reward');
+        // ─── MINE TAB ─────────────────────────────────────────────────────────
+        async function loadMineTab() {
+            try {
+                const res = await fetch('/reward');
+                const data = await res.json();
+                document.getElementById('mine-reward-display').textContent =
+                    `Current reward: ${data.current_reward} DCT (halving in ${data.next_halving_in} blocks)`;
+            } catch (e) { }
+        }
+
+        // ─── MINING ───────────────────────────────────────────────────────────
+        let miningInterval = null;
+        let currentMiningAddress = null;
+
+        async function startMining() {
+            const address = document.getElementById('mine-address').value.trim();
+            if (!address) { alert('Enter your wallet address first!'); return; }
+
+            currentMiningAddress = address;
+
+            const res = await fetch('/mine', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ miner_address: address })
+            });
             const data = await res.json();
-            document.getElementById('mine-reward-display').textContent = 
-                `Current reward: ${data.current_reward} DCT (halving in ${data.next_halving_in} blocks)`;
-        } catch (e) {}
-    }
 
-    // ─── MINING ───────────────────────────────────────────────────────────
-    let miningInterval = null;
-    let currentMiningAddress = null;
+            if (data.error) { alert(data.error); return; }
 
-    async function startMining() {
-        const address = document.getElementById('mine-address').value.trim();
-        if (!address) { alert('Enter your wallet address first!'); return; }
+            const screen = document.getElementById('mining-screen');
+            screen.classList.add('is-mining');
 
-        currentMiningAddress = address;
+            miningInterval = setInterval(async () => {
+                if (!currentMiningAddress) return;
 
-        const res = await fetch('/mine', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ miner_address: address })
-        });
-        const data = await res.json();
+                const prog = await fetch('/mine/progress').then(r => r.json());
 
-        if (data.error) { alert(data.error); return; }
+                if (prog.is_mining) {
+                    document.getElementById('live-nonce').textContent = prog.current_nonce.toLocaleString();
+                    document.getElementById('live-hash').innerHTML = formatHash(prog.current_hash);
+                    document.getElementById('live-hps').textContent = prog.hashes_per_second.toLocaleString();
+                    document.getElementById('live-eta').textContent = prog.estimated_remaining;
+                    document.getElementById('live-miners').textContent = prog.active_miners || '—';
+                }
 
-        const screen = document.getElementById('mining-screen');
-        screen.classList.add('is-mining');
+                const status = await fetch(`/mine/status?address=${encodeURIComponent(currentMiningAddress)}`).then(r => r.json());
 
-        miningInterval = setInterval(async () => {
-            if (!currentMiningAddress) return;
-
-            const prog = await fetch('/mine/progress').then(r => r.json());
-
-            if (prog.is_mining) {
-                document.getElementById('live-nonce').textContent = prog.current_nonce.toLocaleString();
-                document.getElementById('live-hash').innerHTML = formatHash(prog.current_hash);
-                document.getElementById('live-hps').textContent = prog.hashes_per_second.toLocaleString();
-                document.getElementById('live-eta').textContent = prog.estimated_remaining;
-                document.getElementById('live-miners').textContent = prog.active_miners || '—';
-            }
-
-            const status = await fetch(`/mine/status?address=${encodeURIComponent(currentMiningAddress)}`).then(r => r.json());
-
-            if (status.status === 'won') {
-                clearInterval(miningInterval);
-                miningInterval = null;
-                screen.classList.remove('is-mining');
-                screen.classList.add('is-done');
-                document.getElementById('done-block-index').textContent = 'Block #' + status.block_index + ' added to the chain';
-                document.getElementById('done-hash').innerHTML = formatHash(status.hash);
-                refreshMyBalance();
-            } else if (status.status === 'lost') {
-                clearInterval(miningInterval);
-                miningInterval = null;
-                screen.classList.remove('is-mining');
-                screen.classList.add('is-lost');
-                refreshMyBalance();
-            }
-        }, 100);
-    }
-
-    function resetMining() {
-        if (miningInterval) {
-            clearInterval(miningInterval);
-            miningInterval = null;
-        }
-        const screen = document.getElementById('mining-screen');
-        screen.classList.remove('is-mining', 'is-done', 'is-lost');
-        document.getElementById('live-nonce').textContent = '0';
-        document.getElementById('live-hash').textContent = 'Calculating first hash...';
-        document.getElementById('live-miners').textContent = '—';
-        currentMiningAddress = null;
-    }
-
-    // ─── SEND TRANSACTION ─────────────────────────────────────────────────
-    async function sendTransaction() {
-        const sender = document.getElementById('send-sender').value.trim();
-        const privateKey = document.getElementById('send-private-key').value.trim();
-        const recipient = document.getElementById('send-recipient').value.trim();
-        const amount = parseFloat(document.getElementById('send-amount').value);
-        const fee = parseFloat(document.getElementById('send-fee').value) || 0;
-        const msgEl = document.getElementById('send-msg');
-
-        if (!sender || !privateKey || !recipient || !amount) {
-            msgEl.className = 'msg-error';
-            msgEl.textContent = 'Please fill in all fields.';
-            return;
+                if (status.status === 'won') {
+                    clearInterval(miningInterval);
+                    miningInterval = null;
+                    screen.classList.remove('is-mining');
+                    screen.classList.add('is-done');
+                    document.getElementById('done-block-index').textContent = 'Block #' + status.block_index + ' added to the chain';
+                    document.getElementById('done-hash').innerHTML = formatHash(status.hash);
+                    refreshMyBalance();
+                } else if (status.status === 'lost') {
+                    clearInterval(miningInterval);
+                    miningInterval = null;
+                    screen.classList.remove('is-mining');
+                    screen.classList.add('is-lost');
+                    refreshMyBalance();
+                }
+            }, 100);
         }
 
-        try {
-            const signRes = await fetch('/sign', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ sender, recipient, amount, private_key: privateKey })
-            });
-            const signData = await signRes.json();
+        function resetMining() {
+            if (miningInterval) {
+                clearInterval(miningInterval);
+                miningInterval = null;
+            }
+            const screen = document.getElementById('mining-screen');
+            screen.classList.remove('is-mining', 'is-done', 'is-lost');
+            document.getElementById('live-nonce').textContent = '0';
+            document.getElementById('live-hash').textContent = 'Calculating first hash...';
+            document.getElementById('live-miners').textContent = '—';
+            currentMiningAddress = null;
+        }
 
-            const txRes = await fetch('/transaction/new', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sender, recipient, amount,
-                    signature: signData.signature,
-                    public_key: sender,
-                    fee: fee
-                })
-            });
-            const txData = await txRes.json();
+        // ─── SEND TRANSACTION ─────────────────────────────────────────────────
+        async function sendTransaction() {
+            const sender = document.getElementById('send-sender').value.trim();
+            const privateKey = document.getElementById('send-private-key').value.trim();
+            const recipient = document.getElementById('send-recipient').value.trim();
+            const amount = parseFloat(document.getElementById('send-amount').value);
+            const fee = parseFloat(document.getElementById('send-fee').value) || 0;
+            const msgEl = document.getElementById('send-msg');
 
-            if (txData.error) {
+            if (!sender || !privateKey || !recipient || !amount) {
                 msgEl.className = 'msg-error';
-                msgEl.textContent = '✗ ' + txData.error;
-            } else {
-                msgEl.className = 'msg-success';
-                msgEl.textContent = '✓ Transaction submitted! Mine a block to confirm it.';
-                document.getElementById('send-amount').value = '';
-                document.getElementById('send-fee').value = '';
+                msgEl.textContent = 'Please fill in all fields.';
+                return;
             }
-        } catch (e) {
-            msgEl.className = 'msg-error';
-            msgEl.textContent = '✗ Something went wrong.';
+
+            try {
+                const signRes = await fetch('/sign', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sender, recipient, amount, private_key: privateKey })
+                });
+                const signData = await signRes.json();
+
+                const txRes = await fetch('/transaction/new', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sender, recipient, amount,
+                        signature: signData.signature,
+                        public_key: sender,
+                        fee: fee
+                    })
+                });
+                const txData = await txRes.json();
+
+                if (txData.error) {
+                    msgEl.className = 'msg-error';
+                    msgEl.textContent = '✗ ' + txData.error;
+                } else {
+                    msgEl.className = 'msg-success';
+                    msgEl.textContent = '✓ Transaction submitted! Mine a block to confirm it.';
+                    document.getElementById('send-amount').value = '';
+                    document.getElementById('send-fee').value = '';
+                }
+            } catch (e) {
+                msgEl.className = 'msg-error';
+                msgEl.textContent = '✗ Something went wrong.';
+            }
         }
-    }
 
-    // ─── BLOCKCHAIN EXPLORER ──────────────────────────────────────────────
-    async function loadExplorer() {
-        const res = await fetch('/chain');
-        const data = await res.json();
-        const container = document.getElementById('explorer-content');
+        // ─── BLOCKCHAIN EXPLORER ──────────────────────────────────────────────
+        async function loadExplorer() {
+            const res = await fetch('/chain');
+            const data = await res.json();
+            const container = document.getElementById('explorer-content');
 
-        if (data.chain.length === 0) {
-            container.innerHTML = '<div class="empty-state">No blocks yet.</div>';
-            return;
-        }
+            if (data.chain.length === 0) {
+                container.innerHTML = '<div class="empty-state">No blocks yet.</div>';
+                return;
+            }
 
-        const blocks = [...data.chain].reverse();
-        container.innerHTML = blocks.map(block => {
-            const date = new Date(block.timestamp * 1000).toLocaleString();
-            const txRows = block.transactions.map(tx => {
-                const feeDisplay = tx.fee ? `<span class="tx-fee">fee: ${tx.fee} DCT</span>` : '';
-                return `
+            const blocks = [...data.chain].reverse();
+            container.innerHTML = blocks.map(block => {
+                const date = new Date(block.timestamp * 1000).toLocaleString();
+                const txRows = block.transactions.map(tx => {
+                    const feeDisplay = tx.fee ? `<span class="tx-fee">fee: ${tx.fee} DCT</span>` : '';
+                    return `
                     <div class="tx-row">
                         <div class="tx-addresses">
                             <span class="tx-addr ${tx.sender === 'NETWORK' ? 'network' : ''}">${tx.sender === 'NETWORK' ? 'NETWORK' : tx.sender.slice(0, 16) + '...'}</span>
@@ -1071,9 +1254,9 @@
                         <span class="tx-amount">+${tx.amount} DCT</span>
                     </div>
                 `;
-            }).join('');
+                }).join('');
 
-            return `
+                return `
                 <div class="block-card">
                     <div class="block-header">
                         <div class="block-index">Block #${block.index}</div>
@@ -1088,32 +1271,33 @@
                     ${txRows}
                 </div>
             `;
-        }).join('');
-    }
-
-    // ─── HELPERS ──────────────────────────────────────────────────────────
-    function formatHash(hash) {
-        if (!hash) return '';
-        let i = 0;
-        while (i < hash.length && hash[i] === '0') i++;
-        if (i === 0) return hash;
-        return `<span class="highlight-zeros">${hash.slice(0, i)}</span>${hash.slice(i)}`;
-    }
-
-    // ─── INIT ─────────────────────────────────────────────────────────────
-    window.onload = () => {
-        const stored = loadStoredWallet();
-        if (stored.address) {
-            document.getElementById('mine-address').value = stored.address;
-            document.getElementById('send-sender').value = stored.address;
-            document.getElementById('send-private-key').value = stored.privateKey;
+            }).join('');
         }
-        setTimeout(() => {
-            loadDashboard();
-            if (stored.address) refreshMyBalance();
-        }, 1000);
-    };
-</script>
+
+        // ─── HELPERS ──────────────────────────────────────────────────────────
+        function formatHash(hash) {
+            if (!hash) return '';
+            let i = 0;
+            while (i < hash.length && hash[i] === '0') i++;
+            if (i === 0) return hash;
+            return `<span class="highlight-zeros">${hash.slice(0, i)}</span>${hash.slice(i)}`;
+        }
+
+        // ─── INIT ─────────────────────────────────────────────────────────────
+        window.onload = () => {
+            const stored = loadStoredWallet();
+            if (stored.address) {
+                document.getElementById('mine-address').value = stored.address;
+                document.getElementById('send-sender').value = stored.address;
+                document.getElementById('send-private-key').value = stored.privateKey;
+            }
+            setTimeout(() => {
+                loadDashboard();
+                if (stored.address) refreshMyBalance();
+            }, 1000);
+        };
+    </script>
 
 </body>
+
 </html>

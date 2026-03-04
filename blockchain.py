@@ -1,45 +1,50 @@
 # program zaroven slouzi k uceni, proto je plny komentaru
 
-import hashlib 
+import hashlib
 import json
-import time 
+import time
 import os
 import ssl
 import certifi
 import threading
-from ecdsa import SigningKey, VerifyingKey, SECP256k1, BadSignatureError 
+from ecdsa import SigningKey, VerifyingKey, SECP256k1, BadSignatureError
 
 # bloky
 
-class Block:   
-    def __init__(self, index, transactions, previous_hash, nonce=0): # spusti se pokazde, kdyz se vytvori novy block
-        self.index = index 
-        self.transactions = transactions 
-        self.previous_hash = previous_hash  
+
+class Block:
+    # spusti se pokazde, kdyz se vytvori novy block
+    def __init__(self, index, transactions, previous_hash, nonce=0):
+        self.index = index
+        self.transactions = transactions
+        self.previous_hash = previous_hash
         self.nonce = nonce
         self.timestamp = time.time()
         self.hash = self.calculate_hash()
 
-    def calculate_hash(self): # prevede data bloku do JSON formatu a zahashuje pomoci sha256
+    def calculate_hash(self):  # prevede data bloku do JSON formatu a zahashuje pomoci sha256
         block_string = json.dumps({
             "index": self.index,
             "transactions": self.transactions,
             "previous_hash": self.previous_hash,
             "nonce": self.nonce,
             "timestamp": self.timestamp
-        }, sort_keys=True) # zajistuje spravnost poradi klicu
+        }, sort_keys=True)  # zajistuje spravnost poradi klicu
         return hashlib.sha256(block_string.encode()).hexdigest()
-    
+
 # samotny blockchain
+
 
 class Blockchain:
     def __init__(self):
         self.chain = []
         self.pending_transactions = []
         self.difficulty = 5
-        self.base_mining_reward = 50 # pocatecni odmena za vytezeni bloku
-        self.halving_interval = 10 # odmena se snizi na polovinu kazdych 10 bloku
-        self.min_reward = 0.001 # minimalni odmena za vytezeni bloku
+        self.base_mining_reward = 50  # pocatecni odmena za vytezeni bloku
+        self.halving_interval = 10  # odmena se snizi na polovinu kazdych 10 bloku
+        self.min_reward = 0.001  # minimalni odmena za vytezeni bloku
+        self.target_block_time = 60  # cilovy cas na vytezeni bloku v sekundach
+        self.adjustment_interval = 5  # po kolika blocich se upravi obtiznost
         self.current_nonce = 0
         self.current_hash_attempt = ""
         self.hashes_per_second = 0
@@ -47,7 +52,7 @@ class Blockchain:
         self.chain_lock = threading.Lock()
         if not self.load_chain():
             self.create_genesis_block()
-    
+
     def create_genesis_block(self):
         genesis_block = Block(0, [], "0")
         genesis_block.hash = genesis_block.calculate_hash()
@@ -60,17 +65,42 @@ class Blockchain:
         from pymongo import MongoClient
         return MongoClient(mongo_uri, tls=True, tlsCAFile=certifi.where(),
                            serverSelectionTimeoutMS=5000)
-    
-    def get_last_block(self):
-        return self.chain[-1] #posledni blok v retezci
 
-    def get_mining_reward(self): # vypocet odmeny za tezeni s halvingem
+    def get_last_block(self):
+        return self.chain[-1]  # posledni blok v retezci
+
+    def get_mining_reward(self):  # vypocet odmeny za tezeni s halvingem
         block_height = len(self.chain)
-        halvings = block_height // self.halving_interval # kolikrat uz doslo k halvingu
-        reward = self.base_mining_reward / (2 ** halvings) # odmena se snizi na polovinu s kazdym halvingem
-        return max(reward, self.min_reward) # odmena nesmi klesnout pod minimum
-    
-    def mine_pending_transactions(self, miner_address): # funkce pro tezeni bloku
+        halvings = block_height // self.halving_interval  # kolikrat uz doslo k halvingu
+        # odmena se snizi na polovinu s kazdym halvingem
+        reward = self.base_mining_reward / (2 ** halvings)
+        # odmena nesmi klesnout pod minimum
+        return max(reward, self.min_reward)
+
+    def adjust_difficulty(self):  # automaticka uprava obtiznosti tezeni
+        if len(self.chain) < self.adjustment_interval + 1:
+            return  # nedostatek bloku pro upravu
+
+        if len(self.chain) % self.adjustment_interval != 0:
+            return  # jeste neni cas na upravu
+
+        # porovnani skutecneho casu s ocekavanym
+        last_block = self.chain[-1]
+        first_block = self.chain[-self.adjustment_interval]
+        actual_time = last_block.timestamp - first_block.timestamp
+        expected_time = self.target_block_time * self.adjustment_interval
+
+        if actual_time < expected_time / 2:
+            self.difficulty += 1  # bloky jsou prilis rychle, zvysit obtiznost
+        elif actual_time > expected_time * 2:
+            self.difficulty -= 1  # bloky jsou prilis pomale, snizit obtiznost
+
+        # obtiznost musi zustat v rozumnem rozmezi
+        self.difficulty = max(1, min(8, self.difficulty))
+        print(
+            f"Difficulty adjusted to {self.difficulty} (actual: {actual_time:.0f}s, expected: {expected_time:.0f}s)")
+
+    def mine_pending_transactions(self, miner_address):  # funkce pro tezeni bloku
         generation = self.mining_generation
 
         # vypocet celkovych poplatku z transakci
@@ -78,7 +108,7 @@ class Blockchain:
         for tx in self.pending_transactions:
             total_fees += tx.get("fee", 0)
 
-        reward_transaction = { # odmena pro minera (odmena za blok + poplatky)
+        reward_transaction = {  # odmena pro minera (odmena za blok + poplatky)
             "sender": "NETWORK",
             "recipient": miner_address,
             "amount": round(self.get_mining_reward() + total_fees, 8)
@@ -86,13 +116,14 @@ class Blockchain:
         transactions = self.pending_transactions.copy()
         transactions.append(reward_transaction)
 
-        new_block = Block( # vytvoreni noveho bloku (do ktereho se pridaji transakce z mempoolu)
+        new_block = Block(  # vytvoreni noveho bloku (do ktereho se pridaji transakce z mempoolu)
             index=len(self.chain),
             transactions=transactions,
             previous_hash=self.get_last_block().hash
         )
 
-        new_block = self.proof_of_work(new_block, generation) # proof of work v novem bloku
+        # proof of work v novem bloku
+        new_block = self.proof_of_work(new_block, generation)
 
         if new_block is None:
             return False
@@ -104,6 +135,7 @@ class Blockchain:
             self.pending_transactions = []
             self.mining_generation += 1
             self.save_chain()
+            self.adjust_difficulty()
             return True
 
     def proof_of_work(self, block, generation):
@@ -132,7 +164,7 @@ class Blockchain:
         self.current_hash_attempt = ""
         self.hashes_per_second = 0
         return block
-    
+
     def add_transaction(self, sender, recipient, amount, signature, public_key_hex, fee=0):
         if not self.verify_transaction(sender, recipient, amount, signature, public_key_hex):
             raise Exception("Invalid transaction signature!")
@@ -145,10 +177,11 @@ class Blockchain:
 
         if sender != "NETWORK":
             balance = self.get_balance(sender)
-            total_cost = amount + fee # celkova cena = castka + poplatek
+            total_cost = amount + fee  # celkova cena = castka + poplatek
             if balance < total_cost:
-                raise Exception(f"Insufficient funds! Available balance: {balance} DCT, needed: {total_cost} DCT")
-        
+                raise Exception(
+                    f"Insufficient funds! Available balance: {balance} DCT, needed: {total_cost} DCT")
+
         transaction = {
             "sender": sender,
             "recipient": recipient,
@@ -156,30 +189,32 @@ class Blockchain:
             "fee": fee
         }
         self.pending_transactions.append(transaction)
-    
-    def verify_transaction(self, sender, recipient, amount, signature, public_key_hex): # overeni transakce pomoci ECDSA podpisu
+
+    # overeni transakce pomoci ECDSA podpisu
+    def verify_transaction(self, sender, recipient, amount, signature, public_key_hex):
         try:
             public_key = VerifyingKey.from_string(
-                bytes.fromhex(public_key_hex), 
+                bytes.fromhex(public_key_hex),
                 curve=SECP256k1
             )
             message = f"{sender}{recipient}{amount}".encode()
             return public_key.verify(bytes.fromhex(signature), message)
         except BadSignatureError:
             return False
-        
-    def get_balance(self, address): # funkce pro checkovani zustatku na adrese
+
+    def get_balance(self, address):  # funkce pro checkovani zustatku na adrese
         balance = 0
         for block in self.chain:
             for transaction in block.transactions:
                 if transaction["sender"] == address:
                     balance -= transaction["amount"]
-                    balance -= transaction.get("fee", 0) # odecist poplatek z zustatku odesilatele
+                    # odecist poplatek z zustatku odesilatele
+                    balance -= transaction.get("fee", 0)
                 if transaction["recipient"] == address:
                     balance += transaction["amount"]
         return balance
 
-    def is_chain_valid(self): # kontrola integrity blockchainu
+    def is_chain_valid(self):  # kontrola integrity blockchainu
         for i in range(1, len(self.chain)):
             current = self.chain[i]
             previous = self.chain[i - 1]
@@ -188,7 +223,7 @@ class Blockchain:
             if current.previous_hash != previous.hash:
                 return False
         return True
-            
+
     def save_chain(self):
         client = self._get_mongo_client()
         if client:
@@ -230,7 +265,8 @@ class Blockchain:
             try:
                 db = client["doctrinacoin"]
                 collection = db["chain"]
-                chain_data = list(collection.find({}, {"_id": 0}).sort("index", 1))
+                chain_data = list(collection.find(
+                    {}, {"_id": 0}).sort("index", 1))
                 client.close()
                 if not chain_data:
                     return False

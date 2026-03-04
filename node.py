@@ -1,4 +1,5 @@
-from flask import Flask, request, jsonify, render_template # webovy framework pro vytvareni APIs
+# webovy framework pro vytvareni APIs
+from flask import Flask, request, jsonify, render_template
 from blockchain import Blockchain
 from wallet import Wallet
 import threading
@@ -11,16 +12,20 @@ blockchain = Blockchain()
 # per-miner status tracking: address -> {status, block_index, hash, transactions}
 active_miners = {}
 
-@app.route("/wallet/new", methods=["GET"]) # vytvoreni nove penezenky
+
+@app.route("/wallet/new", methods=["GET"])  # vytvoreni nove penezenky
 def new_wallet():
     wallet = Wallet()
     return jsonify({
-        "private_key": wallet.get_private_key(), # v realnem pripade by se soukormy klic nemel posilat pres sit
+        # v realnem pripade by se soukormy klic nemel posilat pres sit
+        "private_key": wallet.get_private_key(),
         "public_key": wallet.get_public_key(),
         "address": wallet.get_address()
     })
 
-@app.route("/balance/<address>", methods=["GET"]) # ziskani zustatku na dane adrese
+
+# ziskani zustatku na dane adrese
+@app.route("/balance/<address>", methods=["GET"])
 def get_balance(address):
     balance = blockchain.get_balance(address)
     return jsonify({
@@ -28,15 +33,17 @@ def get_balance(address):
         "balance": balance
     })
 
-@app.route("/transaction/new", methods=["POST"]) # posilani nove transakce
+
+@app.route("/transaction/new", methods=["POST"])  # posilani nove transakce
 def new_transaction():
     data = request.get_json()
-    required_fields = ["sender", "recipient", "amount", "signature", "public_key"]
-    
+    required_fields = ["sender", "recipient",
+                       "amount", "signature", "public_key"]
+
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing fields"}), 400
 
-    fee = data.get("fee", 0) # poplatek je volitelny, vychozi hodnota 0
+    fee = data.get("fee", 0)  # poplatek je volitelny, vychozi hodnota 0
 
     try:
         blockchain.add_transaction(
@@ -50,7 +57,8 @@ def new_transaction():
         return jsonify({"message": "Transaction added to pending pool"})
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-    
+
+
 @app.route("/mine", methods=["POST"])
 def mine():
     data = request.get_json()
@@ -66,7 +74,7 @@ def mine():
 
     def run_mining(miner_address):
         result = blockchain.mine_pending_transactions(miner_address)
-        
+
         if result:
             last_block = blockchain.get_last_block()
             active_miners[miner_address] = {
@@ -96,6 +104,7 @@ def mine():
 
     return jsonify({"message": "Mining started!"})
 
+
 @app.route("/mine/status", methods=["GET"])
 def mine_status():
     address = request.args.get("address")
@@ -103,13 +112,14 @@ def mine_status():
         return jsonify({"status": "idle"})
     return jsonify(active_miners[address])
 
+
 @app.route("/mine/progress", methods=["GET"])
 def mine_progress():
     try:
         hps = blockchain.hashes_per_second
         nonce = blockchain.current_nonce
         expected_attempts = 16 ** blockchain.difficulty
-        
+
         if hps > 0:
             remaining_attempts = max(0, expected_attempts - nonce)
             estimated_seconds = remaining_attempts / hps
@@ -120,7 +130,8 @@ def mine_progress():
             estimate = "Calculating..."
 
         # count how many miners are currently active
-        mining_count = sum(1 for m in active_miners.values() if m["status"] == "mining")
+        mining_count = sum(1 for m in active_miners.values()
+                           if m["status"] == "mining")
 
         return jsonify({
             "is_mining": mining_count > 0,
@@ -141,19 +152,23 @@ def mine_progress():
             "estimated_remaining": "Calculating..."
         })
 
-@app.route("/reward", methods=["GET"]) # aktualni odmena za tezeni
+
+@app.route("/reward", methods=["GET"])  # aktualni odmena za tezeni
 def get_reward():
     reward = blockchain.get_mining_reward()
     block_height = len(blockchain.chain)
-    next_halving = blockchain.halving_interval - (block_height % blockchain.halving_interval)
+    next_halving = blockchain.halving_interval - \
+        (block_height % blockchain.halving_interval)
     return jsonify({
         "current_reward": reward,
         "block_height": block_height,
         "next_halving_in": next_halving,
-        "halving_interval": blockchain.halving_interval
+        "halving_interval": blockchain.halving_interval,
+        "difficulty": blockchain.difficulty
     })
-    
-@app.route("/chain", methods=["GET"]) # ziskani celeho blockchainu
+
+
+@app.route("/chain", methods=["GET"])  # ziskani celeho blockchainu
 def get_chain():
     chain_data = []
     for block in blockchain.chain:
@@ -170,10 +185,12 @@ def get_chain():
         "length": len(blockchain.chain)
     })
 
-@app.route("/validate", methods=["GET"]) # validace blockchainu
+
+@app.route("/validate", methods=["GET"])  # validace blockchainu
 def validate():
     is_valid = blockchain.is_chain_valid()
     return jsonify({"is_valid": is_valid})
+
 
 @app.route("/sign", methods=["POST"])
 def sign():
@@ -187,22 +204,7 @@ def sign():
     signature = private_key.sign(message)
     return jsonify({"signature": signature.hex()})
 
-@app.route("/")
-def index():
-    return render_template("index.html")
 
-@app.route("/test")
-def test():
-    return jsonify({"hashes_per_second": blockchain.hashes_per_second})
-
-@app.route("/test-save")
-def test_save():
-    try:
-        blockchain.save_chain()
-        return jsonify({"message": "saved successfully"})
-    except Exception as e:
-        return jsonify({"error": str(e)})
-    
 @app.route("/reset", methods=["POST"])
 def reset_chain():
     data = request.get_json()
@@ -214,6 +216,26 @@ def reset_chain():
     blockchain.create_genesis_block()
     blockchain.save_chain()
     return jsonify({"message": "Blockchain reset to genesis block"})
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+@app.route("/test")
+def test():
+    return jsonify({"hashes_per_second": blockchain.hashes_per_second})
+
+
+@app.route("/test-save")
+def test_save():
+    try:
+        blockchain.save_chain()
+        return jsonify({"message": "saved successfully"})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port, debug=True)
