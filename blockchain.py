@@ -45,6 +45,8 @@ class Blockchain:
         self.min_reward = 0.001  # minimalni odmena za vytezeni bloku
         self.target_block_time = 60  # cilovy cas na vytezeni bloku v sekundach
         self.adjustment_interval = 5  # po kolika blocich se upravi obtiznost
+        self.min_difficulty = 3  # minimalni obtiznost — zabranuje prilis rychlemu tezeni
+        self.max_difficulty = 8  # maximalni obtiznost
         self.mining_generation = 0
         self.chain_lock = threading.Lock()
         if not self.load_chain():
@@ -87,13 +89,15 @@ class Blockchain:
         actual_time = last_block.timestamp - first_block.timestamp
         expected_time = self.target_block_time * self.adjustment_interval
 
-        if actual_time < expected_time / 2:
-            self.difficulty += 1  # bloky jsou prilis rychle, zvysit obtiznost
-        elif actual_time > expected_time * 2:
-            self.difficulty -= 1  # bloky jsou prilis pomale, snizit obtiznost
+        # uprava obtiznosti pouze pri extremnich rozdilech
+        if actual_time < expected_time / 4:
+            self.difficulty += 1  # bloky jsou vyrazne rychlejsi, zvysit obtiznost
+        elif actual_time > expected_time * 4:
+            self.difficulty -= 1  # bloky jsou vyrazne pomalejsi, snizit obtiznost
 
         # obtiznost musi zustat v rozumnem rozmezi
-        self.difficulty = max(1, min(8, self.difficulty))
+        self.difficulty = max(self.min_difficulty, min(
+            self.max_difficulty, self.difficulty))
         print(
             f"Difficulty adjusted to {self.difficulty} (actual: {actual_time:.0f}s, expected: {expected_time:.0f}s)")
 
@@ -127,7 +131,10 @@ class Blockchain:
             return False
 
         with self.chain_lock:
+            # dvojita kontrola: generace A hash predchoziho bloku
             if self.mining_generation != generation:
+                return False
+            if new_block.previous_hash != self.get_last_block().hash:
                 return False
             self.chain.append(new_block)
             self.pending_transactions = []
@@ -141,7 +148,12 @@ class Blockchain:
         computed_hash = block.calculate_hash()
         start_time = time.time()
 
+        # kontrola generace pred zahajenim tezeni
+        if self.mining_generation != generation:
+            return None
+
         while not computed_hash.startswith("0" * self.difficulty):
+            # kontrola generace pri kazdem pokusu — pokud nekdo jiny vyhraje, zastavit
             if self.mining_generation != generation:
                 if progress:
                     progress["current_nonce"] = 0
@@ -158,6 +170,14 @@ class Blockchain:
                 elapsed = time.time() - start_time
                 if elapsed > 0:
                     progress["hashes_per_second"] = int(block.nonce / elapsed)
+
+        # posledni kontrola generace po nalezeni platneho hashe
+        if self.mining_generation != generation:
+            if progress:
+                progress["current_nonce"] = 0
+                progress["current_hash"] = ""
+                progress["hashes_per_second"] = 0
+            return None
 
         block.hash = computed_hash
         if progress:
