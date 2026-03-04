@@ -1239,7 +1239,7 @@
             miningInterval = setInterval(async () => {
                 if (!currentMiningAddress) return;
 
-                const prog = await fetch('/mine/progress').then(r => r.json());
+                const prog = await fetch(`/mine/progress?address=${encodeURIComponent(currentMiningAddress)}`).then(r => r.json());
 
                 if (prog.is_mining) {
                     document.getElementById('live-nonce').textContent = prog.current_nonce.toLocaleString();

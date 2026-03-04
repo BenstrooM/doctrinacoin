@@ -9,7 +9,7 @@ port = int(os.environ.get("PORT", 5000))
 app = Flask(__name__)
 blockchain = Blockchain()
 
-# per-miner status tracking: address -> {status, block_index, hash, transactions}
+# per-miner status tracking: address -> {status, block_index, hash, transactions, progress...}
 active_miners = {}
 
 
@@ -72,32 +72,32 @@ def mine():
     if address in active_miners and active_miners[address]["status"] == "mining":
         return jsonify({"error": "You are already mining!"}), 400
 
-    def run_mining(miner_address):
-        result = blockchain.mine_pending_transactions(miner_address)
-
-        if result:
-            last_block = blockchain.get_last_block()
-            active_miners[miner_address] = {
-                "status": "won",
-                "block_index": last_block.index,
-                "hash": last_block.hash,
-                "transactions": last_block.transactions
-            }
-        else:
-            active_miners[miner_address] = {
-                "status": "lost",
-                "block_index": None,
-                "hash": None,
-                "transactions": None
-            }
-
     # set status before starting thread to avoid race condition
+    # progress fields are updated directly by proof_of_work via the dict reference
     active_miners[address] = {
         "status": "mining",
         "block_index": None,
         "hash": None,
-        "transactions": None
+        "transactions": None,
+        "current_nonce": 0,
+        "current_hash": "",
+        "hashes_per_second": 0
     }
+
+    def run_mining(miner_address):
+        # pass the miner's dict as the progress tracker
+        progress = active_miners[miner_address]
+        result = blockchain.mine_pending_transactions(
+            miner_address, progress=progress)
+
+        if result:
+            last_block = blockchain.get_last_block()
+            active_miners[miner_address]["status"] = "won"
+            active_miners[miner_address]["block_index"] = last_block.index
+            active_miners[miner_address]["hash"] = last_block.hash
+            active_miners[miner_address]["transactions"] = last_block.transactions
+        else:
+            active_miners[miner_address]["status"] = "lost"
 
     thread = threading.Thread(target=run_mining, args=(address,))
     thread.start()
@@ -115,10 +115,14 @@ def mine_status():
 
 @app.route("/mine/progress", methods=["GET"])
 def mine_progress():
-    try:
-        hps = blockchain.hashes_per_second
-        nonce = blockchain.current_nonce
+    address = request.args.get("address")
+
+    # if a specific miner is requested, return their progress
+    if address and address in active_miners:
+        miner = active_miners[address]
         expected_attempts = 16 ** blockchain.difficulty
+        hps = miner.get("hashes_per_second", 0)
+        nonce = miner.get("current_nonce", 0)
 
         if hps > 0:
             remaining_attempts = max(0, expected_attempts - nonce)
@@ -129,28 +133,29 @@ def mine_progress():
         else:
             estimate = "Calculating..."
 
-        # count how many miners are currently active
         mining_count = sum(1 for m in active_miners.values()
                            if m["status"] == "mining")
 
         return jsonify({
-            "is_mining": mining_count > 0,
+            "is_mining": miner["status"] == "mining",
             "active_miners": mining_count,
             "current_nonce": nonce,
-            "current_hash": blockchain.current_hash_attempt,
-            "hashes_per_second": int(hps),
+            "current_hash": miner.get("current_hash", ""),
+            "hashes_per_second": hps,
             "estimated_remaining": estimate
         })
-    except Exception as e:
-        return jsonify({
-            "error": str(e),
-            "is_mining": False,
-            "active_miners": 0,
-            "current_nonce": blockchain.current_nonce,
-            "current_hash": blockchain.current_hash_attempt,
-            "hashes_per_second": 0,
-            "estimated_remaining": "Calculating..."
-        })
+
+    # fallback: aggregate view
+    mining_count = sum(1 for m in active_miners.values()
+                       if m["status"] == "mining")
+    return jsonify({
+        "is_mining": mining_count > 0,
+        "active_miners": mining_count,
+        "current_nonce": 0,
+        "current_hash": "",
+        "hashes_per_second": 0,
+        "estimated_remaining": "Calculating..."
+    })
 
 
 # zobrazeni cekajicich transakci v mempoolu
@@ -234,7 +239,7 @@ def index():
 
 @app.route("/test")
 def test():
-    return jsonify({"hashes_per_second": blockchain.hashes_per_second})
+    return jsonify({"hashes_per_second": 0})
 
 
 @app.route("/test-save")

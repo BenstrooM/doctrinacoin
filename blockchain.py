@@ -45,9 +45,6 @@ class Blockchain:
         self.min_reward = 0.001  # minimalni odmena za vytezeni bloku
         self.target_block_time = 60  # cilovy cas na vytezeni bloku v sekundach
         self.adjustment_interval = 5  # po kolika blocich se upravi obtiznost
-        self.current_nonce = 0
-        self.current_hash_attempt = ""
-        self.hashes_per_second = 0
         self.mining_generation = 0
         self.chain_lock = threading.Lock()
         if not self.load_chain():
@@ -100,7 +97,8 @@ class Blockchain:
         print(
             f"Difficulty adjusted to {self.difficulty} (actual: {actual_time:.0f}s, expected: {expected_time:.0f}s)")
 
-    def mine_pending_transactions(self, miner_address):  # funkce pro tezeni bloku
+    # funkce pro tezeni bloku
+    def mine_pending_transactions(self, miner_address, progress=None):
         generation = self.mining_generation
 
         # vypocet celkovych poplatku z transakci
@@ -123,7 +121,7 @@ class Blockchain:
         )
 
         # proof of work v novem bloku
-        new_block = self.proof_of_work(new_block, generation)
+        new_block = self.proof_of_work(new_block, generation, progress)
 
         if new_block is None:
             return False
@@ -138,31 +136,34 @@ class Blockchain:
             self.adjust_difficulty()
             return True
 
-    def proof_of_work(self, block, generation):
+    def proof_of_work(self, block, generation, progress=None):
         block.nonce = 0
         computed_hash = block.calculate_hash()
         start_time = time.time()
 
         while not computed_hash.startswith("0" * self.difficulty):
             if self.mining_generation != generation:
-                self.current_nonce = 0
-                self.current_hash_attempt = ""
-                self.hashes_per_second = 0
+                if progress:
+                    progress["current_nonce"] = 0
+                    progress["current_hash"] = ""
+                    progress["hashes_per_second"] = 0
                 return None
 
             block.nonce += 1
             computed_hash = block.calculate_hash()
-            self.current_nonce = block.nonce
-            self.current_hash_attempt = computed_hash
 
-            elapsed = time.time() - start_time
-            if elapsed > 0:
-                self.hashes_per_second = block.nonce / elapsed
+            if progress:
+                progress["current_nonce"] = block.nonce
+                progress["current_hash"] = computed_hash
+                elapsed = time.time() - start_time
+                if elapsed > 0:
+                    progress["hashes_per_second"] = int(block.nonce / elapsed)
 
         block.hash = computed_hash
-        self.current_nonce = 0
-        self.current_hash_attempt = ""
-        self.hashes_per_second = 0
+        if progress:
+            progress["current_nonce"] = 0
+            progress["current_hash"] = ""
+            progress["hashes_per_second"] = 0
         return block
 
     def add_transaction(self, sender, recipient, amount, signature, public_key_hex, fee=0):
