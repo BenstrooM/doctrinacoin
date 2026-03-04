@@ -153,6 +153,15 @@ def mine_progress():
         })
 
 
+# zobrazeni cekajicich transakci v mempoolu
+@app.route("/mempool", methods=["GET"])
+def get_mempool():
+    return jsonify({
+        "pending_transactions": blockchain.pending_transactions,
+        "count": len(blockchain.pending_transactions)
+    })
+
+
 @app.route("/reward", methods=["GET"])  # aktualni odmena za tezeni
 def get_reward():
     reward = blockchain.get_mining_reward()

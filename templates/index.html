@@ -567,7 +567,6 @@
             border-radius: 4px;
             padding: 20px 24px;
             margin-bottom: 12px;
-            cursor: pointer;
             transition: border-color 0.2s;
         }
 
@@ -611,6 +610,7 @@
             gap: 24px;
             font-size: 0.7rem;
             color: var(--text-dim);
+            flex-wrap: wrap;
         }
 
         .block-meta span {
@@ -618,53 +618,113 @@
         }
 
         .tx-row {
-            padding: 10px 14px;
+            padding: 12px 14px;
             background: var(--bg3);
             border-radius: 3px;
             margin-top: 8px;
-            font-size: 0.7rem;
+            font-size: 0.68rem;
+        }
+
+        .tx-row-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 6px;
         }
 
-        .tx-addresses {
+        .tx-direction {
             display: flex;
             align-items: center;
             gap: 8px;
-            flex: 1;
-            min-width: 0;
         }
 
-        .tx-addr {
+        .tx-direction-label {
             color: var(--text-dim);
-            max-width: 100px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            min-width: 35px;
         }
 
-        .tx-addr.network {
+        .tx-full-addr {
+            color: var(--accent);
+            word-break: break-all;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .tx-full-addr:hover {
+            color: var(--accent2);
+        }
+
+        .tx-full-addr.network {
             color: var(--accent3);
+            cursor: default;
         }
 
-        .tx-arrow {
-            color: var(--text-dim);
+        .tx-amounts {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             flex-shrink: 0;
         }
 
         .tx-amount {
             color: var(--accent2);
             font-weight: 700;
-            flex-shrink: 0;
-            margin-left: 16px;
         }
 
         .tx-fee {
             color: var(--accent3);
-            font-size: 0.65rem;
-            flex-shrink: 0;
-            margin-left: 8px;
+            font-size: 0.6rem;
+        }
+
+        .tx-arrow {
+            color: var(--text-dim);
+        }
+
+        /* MEMPOOL */
+        .mempool-tx {
+            padding: 12px 14px;
+            background: var(--bg3);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent3);
+            border-radius: 3px;
+            margin-bottom: 8px;
+            font-size: 0.68rem;
+        }
+
+        .mempool-tx-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .mempool-tx-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .mempool-addr {
+            color: var(--accent);
+            word-break: break-all;
+            cursor: pointer;
+        }
+
+        .mempool-addr:hover {
+            color: var(--accent2);
+        }
+
+        .pending-badge {
+            display: inline-block;
+            background: rgba(255, 107, 53, 0.15);
+            color: var(--accent3);
+            font-size: 0.6rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin-bottom: 16px;
         }
 
         .empty-state {
@@ -727,10 +787,25 @@
             font-size: 0.78rem;
         }
 
-        .divider {
-            border: none;
-            border-top: 1px solid var(--border);
-            margin: 24px 0;
+        .copy-toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--accent);
+            color: var(--bg);
+            padding: 8px 20px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 200;
+        }
+
+        .copy-toast.show {
+            opacity: 1;
         }
 
         /* SCROLLBAR */
@@ -789,6 +864,7 @@
         <button class="tab" onclick="showTab('wallet')">Wallet</button>
         <button class="tab" onclick="showTab('mine')">Mine</button>
         <button class="tab" onclick="showTab('send')">Send</button>
+        <button class="tab" onclick="showTab('mempool')">Mempool</button>
         <button class="tab" onclick="showTab('explorer')">Explorer</button>
     </nav>
 
@@ -818,7 +894,7 @@
                     <div class="stat-value" id="stat-halving">—<span> blocks</span></div>
                 </div>
             </div>
-            <div class="grid-2" style="margin-bottom:20px">
+            <div class="grid-3" style="margin-bottom:20px">
                 <div class="stat-card">
                     <div class="stat-label">Chain Valid</div>
                     <div class="stat-value" id="stat-valid">—</div>
@@ -826,6 +902,10 @@
                 <div class="stat-card">
                     <div class="stat-label">Difficulty</div>
                     <div class="stat-value" id="stat-difficulty">—</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending TXs</div>
+                    <div class="stat-value" id="stat-pending">—</div>
                 </div>
             </div>
             <div class="card">
@@ -961,6 +1041,17 @@
             </div>
         </div>
 
+        <!-- MEMPOOL -->
+        <div class="section" id="tab-mempool">
+            <div class="section-header">
+                <div class="section-title">Mempool</div>
+                <button class="refresh-btn" onclick="loadMempool()">↻ Refresh</button>
+            </div>
+            <div id="mempool-content">
+                <div class="empty-state">Loading mempool...</div>
+            </div>
+        </div>
+
         <!-- EXPLORER -->
         <div class="section" id="tab-explorer">
             <div class="section-header">
@@ -974,6 +1065,9 @@
 
     </main>
 
+    <!-- Copy toast -->
+    <div class="copy-toast" id="copy-toast">Address copied!</div>
+
     <script>
         // ─── TAB NAVIGATION ───────────────────────────────────────────────────
         function showTab(name) {
@@ -986,6 +1080,16 @@
             if (name === 'explorer') loadExplorer();
             if (name === 'wallet') loadWalletTab();
             if (name === 'mine') loadMineTab();
+            if (name === 'mempool') loadMempool();
+        }
+
+        // ─── COPY TO CLIPBOARD ───────────────────────────────────────────────
+        function copyAddress(addr) {
+            navigator.clipboard.writeText(addr).then(() => {
+                const toast = document.getElementById('copy-toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 1500);
+            });
         }
 
         // ─── PERSISTENT WALLET ────────────────────────────────────────────────
@@ -1029,7 +1133,6 @@
             const data = await res.json();
             document.getElementById('my-balance').textContent = data.balance;
 
-            // update header
             document.getElementById('header-wallet').style.display = 'flex';
             document.getElementById('header-address').textContent = stored.address.slice(0, 12) + '...';
             document.getElementById('header-balance').textContent = data.balance + ' DCT';
@@ -1047,7 +1150,6 @@
 
             saveWallet(data.address, data.private_key);
 
-            // auto-fill mine address
             document.getElementById('mine-address').value = data.address;
             document.getElementById('send-sender').value = data.address;
             document.getElementById('send-private-key').value = data.private_key;
@@ -1060,14 +1162,16 @@
             document.getElementById('latest-block-display').innerHTML =
                 '<div class="loading-msg">Connecting to network...</div>';
             try {
-                const [chainRes, validRes, rewardRes] = await Promise.all([
+                const [chainRes, validRes, rewardRes, mempoolRes] = await Promise.all([
                     fetch('/chain'),
                     fetch('/validate'),
-                    fetch('/reward')
+                    fetch('/reward'),
+                    fetch('/mempool')
                 ]);
                 const chain = await chainRes.json();
                 const valid = await validRes.json();
                 const reward = await rewardRes.json();
+                const mempool = await mempoolRes.json();
 
                 document.getElementById('stat-blocks').innerHTML = chain.length + '<span> blocks</span>';
                 document.getElementById('stat-valid').textContent = valid.is_valid ? '✓ Valid' : '✗ Invalid';
@@ -1075,6 +1179,7 @@
                 document.getElementById('stat-reward').innerHTML = reward.current_reward + '<span> DCT</span>';
                 document.getElementById('stat-halving').innerHTML = reward.next_halving_in + '<span> blocks</span>';
                 document.getElementById('stat-difficulty').textContent = reward.difficulty;
+                document.getElementById('stat-pending').textContent = mempool.count;
 
                 await refreshMyBalance();
 
@@ -1161,7 +1266,7 @@
                     screen.classList.add('is-lost');
                     refreshMyBalance();
                 }
-            }, 100);
+            }, 50);
         }
 
         function resetMining() {
@@ -1227,6 +1332,47 @@
             }
         }
 
+        // ─── MEMPOOL ──────────────────────────────────────────────────────────
+        async function loadMempool() {
+            const container = document.getElementById('mempool-content');
+            try {
+                const res = await fetch('/mempool');
+                const data = await res.json();
+
+                if (data.count === 0) {
+                    container.innerHTML = '<div class="empty-state">No pending transactions. The mempool is empty.</div>';
+                    return;
+                }
+
+                container.innerHTML = `<div class="pending-badge">${data.count} pending transaction${data.count > 1 ? 's' : ''}</div>` +
+                    data.pending_transactions.map(tx => {
+                        const feeDisplay = tx.fee ? `<span class="tx-fee">Fee: ${tx.fee} DCT</span>` : '';
+                        return `
+                        <div class="mempool-tx">
+                            <div class="mempool-tx-row">
+                                <div>
+                                    <span style="color:var(--text-dim); font-size:0.6rem; letter-spacing:1px; text-transform:uppercase;">From</span><br>
+                                    <span class="mempool-addr" onclick="copyAddress('${tx.sender}')">${tx.sender}</span>
+                                </div>
+                            </div>
+                            <div class="mempool-tx-row">
+                                <div>
+                                    <span style="color:var(--text-dim); font-size:0.6rem; letter-spacing:1px; text-transform:uppercase;">To</span><br>
+                                    <span class="mempool-addr" onclick="copyAddress('${tx.recipient}')">${tx.recipient}</span>
+                                </div>
+                            </div>
+                            <div class="mempool-tx-row" style="margin-top:8px;">
+                                <span class="tx-amount">+${tx.amount} DCT</span>
+                                ${feeDisplay}
+                            </div>
+                        </div>
+                    `;
+                    }).join('');
+            } catch (e) {
+                container.innerHTML = '<div class="empty-state">Failed to load mempool.</div>';
+            }
+        }
+
         // ─── BLOCKCHAIN EXPLORER ──────────────────────────────────────────────
         async function loadExplorer() {
             const res = await fetch('/chain');
@@ -1242,16 +1388,28 @@
             container.innerHTML = blocks.map(block => {
                 const date = new Date(block.timestamp * 1000).toLocaleString();
                 const txRows = block.transactions.map(tx => {
-                    const feeDisplay = tx.fee ? `<span class="tx-fee">fee: ${tx.fee} DCT</span>` : '';
+                    const senderDisplay = tx.sender === 'NETWORK'
+                        ? '<span class="tx-full-addr network">NETWORK (Block Reward)</span>'
+                        : `<span class="tx-full-addr" onclick="copyAddress('${tx.sender}')">${tx.sender}</span>`;
+                    const recipientDisplay = `<span class="tx-full-addr" onclick="copyAddress('${tx.recipient}')">${tx.recipient}</span>`;
+                    const feeDisplay = tx.fee ? `<span class="tx-fee">Fee: ${tx.fee} DCT</span>` : '';
+
                     return `
                     <div class="tx-row">
-                        <div class="tx-addresses">
-                            <span class="tx-addr ${tx.sender === 'NETWORK' ? 'network' : ''}">${tx.sender === 'NETWORK' ? 'NETWORK' : tx.sender.slice(0, 16) + '...'}</span>
-                            <span class="tx-arrow">→</span>
-                            <span class="tx-addr">${tx.recipient.slice(0, 16)}...</span>
+                        <div style="flex:1; min-width:0;">
+                            <div style="margin-bottom:6px;">
+                                <span class="tx-direction-label">From</span>
+                                ${senderDisplay}
+                            </div>
+                            <div>
+                                <span class="tx-direction-label">To</span>
+                                ${recipientDisplay}
+                            </div>
                         </div>
-                        ${feeDisplay}
-                        <span class="tx-amount">+${tx.amount} DCT</span>
+                        <div class="tx-amounts">
+                            ${feeDisplay}
+                            <span class="tx-amount">+${tx.amount} DCT</span>
+                        </div>
                     </div>
                 `;
                 }).join('');
