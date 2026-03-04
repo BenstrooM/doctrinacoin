@@ -36,13 +36,16 @@ def new_transaction():
     if not all(field in data for field in required_fields):
         return jsonify({"error": "Missing fields"}), 400
 
+    fee = data.get("fee", 0) # poplatek je volitelny, vychozi hodnota 0
+
     try:
         blockchain.add_transaction(
             data["sender"],
             data["recipient"],
             data["amount"],
             data["signature"],
-            data["public_key"]
+            data["public_key"],
+            fee=fee
         )
         return jsonify({"message": "Transaction added to pending pool"})
     except Exception as e:
@@ -137,6 +140,18 @@ def mine_progress():
             "hashes_per_second": 0,
             "estimated_remaining": "Calculating..."
         })
+
+@app.route("/reward", methods=["GET"]) # aktualni odmena za tezeni
+def get_reward():
+    reward = blockchain.get_mining_reward()
+    block_height = len(blockchain.chain)
+    next_halving = blockchain.halving_interval - (block_height % blockchain.halving_interval)
+    return jsonify({
+        "current_reward": reward,
+        "block_height": block_height,
+        "next_halving_in": next_halving,
+        "halving_interval": blockchain.halving_interval
+    })
     
 @app.route("/chain", methods=["GET"]) # ziskani celeho blockchainu
 def get_chain():
@@ -187,6 +202,18 @@ def test_save():
         return jsonify({"message": "saved successfully"})
     except Exception as e:
         return jsonify({"error": str(e)})
+    
+@app.route("/reset", methods=["POST"])
+def reset_chain():
+    data = request.get_json()
+    if data.get("confirm") != "RESET":
+        return jsonify({"error": "Send confirm: RESET to proceed"}), 400
+    blockchain.chain = []
+    blockchain.pending_transactions = []
+    blockchain.mining_generation += 1
+    blockchain.create_genesis_block()
+    blockchain.save_chain()
+    return jsonify({"message": "Blockchain reset to genesis block"})
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=port, debug=True)

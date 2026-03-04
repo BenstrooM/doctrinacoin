@@ -37,7 +37,9 @@ class Blockchain:
         self.chain = []
         self.pending_transactions = []
         self.difficulty = 5
-        self.mining_reward = 50
+        self.base_mining_reward = 50 # pocatecni odmena za vytezeni bloku
+        self.halving_interval = 10 # odmena se snizi na polovinu kazdych 10 bloku
+        self.min_reward = 0.001 # minimalni odmena za vytezeni bloku
         self.current_nonce = 0
         self.current_hash_attempt = ""
         self.hashes_per_second = 0
@@ -61,14 +63,25 @@ class Blockchain:
     
     def get_last_block(self):
         return self.chain[-1] #posledni blok v retezci
+
+    def get_mining_reward(self): # vypocet odmeny za tezeni s halvingem
+        block_height = len(self.chain)
+        halvings = block_height // self.halving_interval # kolikrat uz doslo k halvingu
+        reward = self.base_mining_reward / (2 ** halvings) # odmena se snizi na polovinu s kazdym halvingem
+        return max(reward, self.min_reward) # odmena nesmi klesnout pod minimum
     
     def mine_pending_transactions(self, miner_address): # funkce pro tezeni bloku
         generation = self.mining_generation
 
-        reward_transaction = { # odmena pro minera
+        # vypocet celkovych poplatku z transakci
+        total_fees = 0
+        for tx in self.pending_transactions:
+            total_fees += tx.get("fee", 0)
+
+        reward_transaction = { # odmena pro minera (odmena za blok + poplatky)
             "sender": "NETWORK",
             "recipient": miner_address,
-            "amount": self.mining_reward
+            "amount": round(self.get_mining_reward() + total_fees, 8)
         }
         transactions = self.pending_transactions.copy()
         transactions.append(reward_transaction)
@@ -120,23 +133,27 @@ class Blockchain:
         self.hashes_per_second = 0
         return block
     
-    def add_transaction(self, sender, recipient, amount, signature, public_key_hex):
+    def add_transaction(self, sender, recipient, amount, signature, public_key_hex, fee=0):
         if not self.verify_transaction(sender, recipient, amount, signature, public_key_hex):
             raise Exception("Invalid transaction signature!")
 
         if amount <= 0:
             raise Exception("Transaction amount must be greater than zero")
 
-        balance = self.get_balance(sender)
+        if fee < 0:
+            raise Exception("Fee cannot be negative")
+
         if sender != "NETWORK":
             balance = self.get_balance(sender)
-            if balance < amount:
-                raise Exception(f"Insufficient funds! Available balance: {balance} DCT")
+            total_cost = amount + fee # celkova cena = castka + poplatek
+            if balance < total_cost:
+                raise Exception(f"Insufficient funds! Available balance: {balance} DCT, needed: {total_cost} DCT")
         
         transaction = {
             "sender": sender,
             "recipient": recipient,
-            "amount": amount
+            "amount": amount,
+            "fee": fee
         }
         self.pending_transactions.append(transaction)
     
@@ -157,6 +174,7 @@ class Blockchain:
             for transaction in block.transactions:
                 if transaction["sender"] == address:
                     balance -= transaction["amount"]
+                    balance -= transaction.get("fee", 0) # odecist poplatek z zustatku odesilatele
                 if transaction["recipient"] == address:
                     balance += transaction["amount"]
         return balance

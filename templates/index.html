@@ -170,6 +170,7 @@
 
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+        .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 20px; }
         .span-2 { grid-column: span 2; }
 
         /* INPUTS */
@@ -526,6 +527,7 @@
         .tx-addr.network { color: var(--accent3); }
         .tx-arrow { color: var(--text-dim); flex-shrink: 0; }
         .tx-amount { color: var(--accent2); font-weight: 700; flex-shrink: 0; margin-left: 16px; }
+        .tx-fee { color: var(--accent3); font-size: 0.65rem; flex-shrink: 0; margin-left: 8px; }
 
         .empty-state {
             text-align: center;
@@ -629,7 +631,7 @@
             <div class="section-title">Network Overview</div>
             <button class="refresh-btn" onclick="loadDashboard()">↻ Refresh</button>
         </div>
-        <div class="grid-3" style="margin-bottom:20px">
+        <div class="grid-4" style="margin-bottom:20px">
             <div class="stat-card">
                 <div class="stat-label">Total Blocks</div>
                 <div class="stat-value" id="stat-blocks">—<span> blocks</span></div>
@@ -639,8 +641,22 @@
                 <div class="stat-value" id="stat-balance">—<span> DCT</span></div>
             </div>
             <div class="stat-card">
+                <div class="stat-label">Block Reward</div>
+                <div class="stat-value" id="stat-reward">—<span> DCT</span></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Next Halving</div>
+                <div class="stat-value" id="stat-halving">—<span> blocks</span></div>
+            </div>
+        </div>
+        <div class="grid-2" style="margin-bottom:20px">
+            <div class="stat-card">
                 <div class="stat-label">Chain Valid</div>
                 <div class="stat-value" id="stat-valid">—</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Difficulty</div>
+                <div class="stat-value" id="stat-difficulty">—</div>
             </div>
         </div>
         <div class="card">
@@ -700,7 +716,8 @@
             <div class="mining-idle">
                 <div style="margin-bottom:24px; font-size:2.5rem;">⛏</div>
                 <div style="font-family:var(--display); font-size:1.1rem; font-weight:800; color:var(--text-bright); margin-bottom:8px;">Ready to Mine</div>
-                <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:32px;">Mine pending transactions and earn 50 DCT reward</div>
+                <div style="color:var(--text-dim); font-size:0.78rem; margin-bottom:8px;">Mine pending transactions and earn the block reward + fees</div>
+                <div style="color:var(--accent2); font-size:0.78rem; margin-bottom:32px;" id="mine-reward-display">Current reward: — DCT</div>
                 <input type="text" id="mine-address" placeholder="Your wallet address (to receive reward)" style="max-width:600px; margin:0 auto 16px; display:block;" />
                 <button class="btn btn-mine" style="max-width:300px; margin:0 auto; display:block;" onclick="startMining()">Start Mining</button>
             </div>
@@ -755,6 +772,7 @@
             <input type="text" id="send-private-key" placeholder="Your private key" />
             <input type="text" id="send-recipient" placeholder="Recipient address" />
             <input type="number" id="send-amount" placeholder="Amount (DCT)" />
+            <input type="number" id="send-fee" placeholder="Fee — optional, incentivizes miners (DCT)" step="0.01" min="0" />
             <button class="btn btn-primary" onclick="sendTransaction()">Send DCT</button>
             <div id="send-msg"></div>
         </div>
@@ -784,6 +802,7 @@
         if (name === 'dashboard') loadDashboard();
         if (name === 'explorer') loadExplorer();
         if (name === 'wallet') loadWalletTab();
+        if (name === 'mine') loadMineTab();
     }
 
     // ─── PERSISTENT WALLET ────────────────────────────────────────────────
@@ -858,16 +877,21 @@
         document.getElementById('latest-block-display').innerHTML = 
             '<div class="loading-msg">Connecting to network...</div>';
         try {
-            const [chainRes, validRes] = await Promise.all([
+            const [chainRes, validRes, rewardRes] = await Promise.all([
                 fetch('/chain'),
-                fetch('/validate')
+                fetch('/validate'),
+                fetch('/reward')
             ]);
             const chain = await chainRes.json();
             const valid = await validRes.json();
+            const reward = await rewardRes.json();
 
             document.getElementById('stat-blocks').innerHTML = chain.length + '<span> blocks</span>';
             document.getElementById('stat-valid').textContent = valid.is_valid ? '✓ Valid' : '✗ Invalid';
             document.getElementById('stat-valid').style.color = valid.is_valid ? 'var(--accent2)' : 'var(--danger)';
+            document.getElementById('stat-reward').innerHTML = reward.current_reward + '<span> DCT</span>';
+            document.getElementById('stat-halving').innerHTML = reward.next_halving_in + '<span> blocks</span>';
+            document.getElementById('stat-difficulty').textContent = '5';
 
             await refreshMyBalance();
 
@@ -890,6 +914,16 @@
             document.getElementById('latest-block-display').innerHTML = 
                 '<div class="loading-msg">Waiting for server to wake up... please wait a moment and refresh.</div>';
         }
+    }
+
+    // ─── MINE TAB ─────────────────────────────────────────────────────────
+    async function loadMineTab() {
+        try {
+            const res = await fetch('/reward');
+            const data = await res.json();
+            document.getElementById('mine-reward-display').textContent = 
+                `Current reward: ${data.current_reward} DCT (halving in ${data.next_halving_in} blocks)`;
+        } catch (e) {}
     }
 
     // ─── MINING ───────────────────────────────────────────────────────────
@@ -958,7 +992,7 @@
         document.getElementById('live-hash').textContent = 'Calculating first hash...';
         document.getElementById('live-miners').textContent = '—';
         currentMiningAddress = null;
-}
+    }
 
     // ─── SEND TRANSACTION ─────────────────────────────────────────────────
     async function sendTransaction() {
@@ -966,6 +1000,7 @@
         const privateKey = document.getElementById('send-private-key').value.trim();
         const recipient = document.getElementById('send-recipient').value.trim();
         const amount = parseFloat(document.getElementById('send-amount').value);
+        const fee = parseFloat(document.getElementById('send-fee').value) || 0;
         const msgEl = document.getElementById('send-msg');
 
         if (!sender || !privateKey || !recipient || !amount) {
@@ -988,7 +1023,8 @@
                 body: JSON.stringify({
                     sender, recipient, amount,
                     signature: signData.signature,
-                    public_key: sender
+                    public_key: sender,
+                    fee: fee
                 })
             });
             const txData = await txRes.json();
@@ -999,6 +1035,8 @@
             } else {
                 msgEl.className = 'msg-success';
                 msgEl.textContent = '✓ Transaction submitted! Mine a block to confirm it.';
+                document.getElementById('send-amount').value = '';
+                document.getElementById('send-fee').value = '';
             }
         } catch (e) {
             msgEl.className = 'msg-error';
@@ -1020,16 +1058,20 @@
         const blocks = [...data.chain].reverse();
         container.innerHTML = blocks.map(block => {
             const date = new Date(block.timestamp * 1000).toLocaleString();
-            const txRows = block.transactions.map(tx => `
-                <div class="tx-row">
-                    <div class="tx-addresses">
-                        <span class="tx-addr ${tx.sender === 'NETWORK' ? 'network' : ''}">${tx.sender === 'NETWORK' ? 'NETWORK' : tx.sender.slice(0, 16) + '...'}</span>
-                        <span class="tx-arrow">→</span>
-                        <span class="tx-addr">${tx.recipient.slice(0, 16)}...</span>
+            const txRows = block.transactions.map(tx => {
+                const feeDisplay = tx.fee ? `<span class="tx-fee">fee: ${tx.fee} DCT</span>` : '';
+                return `
+                    <div class="tx-row">
+                        <div class="tx-addresses">
+                            <span class="tx-addr ${tx.sender === 'NETWORK' ? 'network' : ''}">${tx.sender === 'NETWORK' ? 'NETWORK' : tx.sender.slice(0, 16) + '...'}</span>
+                            <span class="tx-arrow">→</span>
+                            <span class="tx-addr">${tx.recipient.slice(0, 16)}...</span>
+                        </div>
+                        ${feeDisplay}
+                        <span class="tx-amount">+${tx.amount} DCT</span>
                     </div>
-                    <span class="tx-amount">+${tx.amount} DCT</span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
             return `
                 <div class="block-card">
@@ -1052,7 +1094,6 @@
     // ─── HELPERS ──────────────────────────────────────────────────────────
     function formatHash(hash) {
         if (!hash) return '';
-        // count leading zeros and color them green
         let i = 0;
         while (i < hash.length && hash[i] === '0') i++;
         if (i === 0) return hash;
