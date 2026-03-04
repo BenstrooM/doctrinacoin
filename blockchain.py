@@ -263,6 +263,11 @@ class Blockchain:
                     })
                 collection.delete_many({})
                 collection.insert_many(chain_data)
+                db["settings"].update_one(
+                    {"key": "difficulty"},
+                    {"$set": {"key": "difficulty", "value": self.difficulty}},
+                    upsert=True
+                )
                 client.close()
             except Exception as e:
                 print(f"MongoDB save failed: {e}")
@@ -288,8 +293,8 @@ class Blockchain:
                 collection = db["chain"]
                 chain_data = list(collection.find(
                     {}, {"_id": 0}).sort("index", 1))
-                client.close()
                 if not chain_data:
+                    client.close()
                     return False
                 self.chain = []
                 for block_data in chain_data:
@@ -301,6 +306,11 @@ class Blockchain:
                     block.timestamp = block_data["timestamp"]
                     block.hash = block_data["hash"]
                     self.chain.append(block)
+                settings = db["settings"].find_one({"key": "difficulty"})
+                if settings:
+                    self.difficulty = max(self.min_difficulty, min(
+                        self.max_difficulty, settings["value"]))
+                client.close()
                 return True
             except Exception as e:
                 print(f"MongoDB load failed: {e}")
