@@ -1217,12 +1217,14 @@
         // ─── MINING ───────────────────────────────────────────────────────────
         let miningInterval = null;
         let currentMiningAddress = null;
+        let miningSession = 0;
 
         async function startMining() {
             const address = document.getElementById('mine-address').value.trim();
             if (!address) { alert('Enter your wallet address first!'); return; }
 
             currentMiningAddress = address;
+            const session = ++miningSession;
 
             const res = await fetch('/mine', {
                 method: 'POST',
@@ -1236,13 +1238,12 @@
             const screen = document.getElementById('mining-screen');
             screen.classList.add('is-mining');
 
-            // small delay to let the server fully register the mining state
-            await new Promise(r => setTimeout(r, 200));
-
             miningInterval = setInterval(async () => {
-                if (!currentMiningAddress) return;
+                if (!currentMiningAddress || session !== miningSession) return;
 
                 const prog = await fetch(`/mine/progress?address=${encodeURIComponent(currentMiningAddress)}`).then(r => r.json());
+
+                if (session !== miningSession) return;
 
                 if (prog.is_mining) {
                     document.getElementById('live-nonce').textContent = prog.current_nonce.toLocaleString();
@@ -1253,6 +1254,8 @@
                 }
 
                 const status = await fetch(`/mine/status?address=${encodeURIComponent(currentMiningAddress)}`).then(r => r.json());
+
+                if (session !== miningSession) return;
 
                 if (status.status === 'won') {
                     clearInterval(miningInterval);
@@ -1270,6 +1273,20 @@
                     refreshMyBalance();
                 }
             }, 50);
+        }
+
+        function resetMining() {
+            miningSession++;
+            if (miningInterval) {
+                clearInterval(miningInterval);
+                miningInterval = null;
+            }
+            const screen = document.getElementById('mining-screen');
+            screen.classList.remove('is-mining', 'is-done', 'is-lost');
+            document.getElementById('live-nonce').textContent = '0';
+            document.getElementById('live-hash').textContent = 'Calculating first hash...';
+            document.getElementById('live-miners').textContent = '—';
+            currentMiningAddress = null;
         }
 
         function resetMining() {
